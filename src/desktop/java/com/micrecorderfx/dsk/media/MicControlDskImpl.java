@@ -2,10 +2,12 @@ package com.micrecorderfx.dsk.media;
 
 import com.micrecorderfx.media.AudioFormatEnum;
 import com.micrecorderfx.media.MicControl;
+import com.micrecorderfx.media.MicControlObserver;
 import com.micrecorderfx.media.Microphone;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,6 +28,11 @@ public class MicControlDskImpl implements MicControl {
     private TargetDataLine line;
     private Microphone selectedMic;
     private boolean stopped = true;
+
+    //11025/5 = 2205 samples em 200ms com samplesize de 16bits = 4410
+    private static final int BUFFER_LENGTH = 4410;
+    private List<MicControlObserver> observers = new ArrayList<>();
+    private double volValue;
 
     private HashMap<String, Line.Info> enumerateMicrophones() {
         HashMap<String, Line.Info> out = new HashMap<>();
@@ -72,6 +79,7 @@ public class MicControlDskImpl implements MicControl {
     public void setSelectedMic(Microphone selectedMic) {
         System.out.println("Chamou setSelectedMic()");
         if (selectedMic != null) {
+            System.out.println("Chamou setSelectedMic()"+selectedMic.getName());
             final Line.Info info = enumerateMicrophones().get(selectedMic.getName());
             this.line = getTargetDataLine(info);
             this.selectedMic = selectedMic;
@@ -94,7 +102,6 @@ public class MicControlDskImpl implements MicControl {
     public void captureAudio() {
         System.out.println("Chamando captureAudio() da implementacao");
         AudioFileFormat.Type fileType = null;
-        File audioFile = null;
 
         stopped = false;
 
@@ -108,23 +115,18 @@ public class MicControlDskImpl implements MicControl {
         if (selectedMic.getFormat() == AudioFormatEnum.AIFC) {
             System.out.println("Selecao de AIFC");
             fileType = AudioFileFormat.Type.AIFC;
-            audioFile = new File("/Users/ivanqueiroz/junk.aifc");
         } else if (selectedMic.getFormat() == AudioFormatEnum.AIFF) {
             System.out.println("Selecao de AIFF");
             fileType = AudioFileFormat.Type.AIFF;
-            audioFile = new File("/Users/ivanqueiroz/junk.aif");
         } else if (selectedMic.getFormat() == AudioFormatEnum.AU) {
             System.out.println("Selecao de AU");
             fileType = AudioFileFormat.Type.AU;
-            audioFile = new File("/Users/ivanqueiroz/junk.au");
         } else if (selectedMic.getFormat() == AudioFormatEnum.SND) {
             System.out.println("Selecao de SND");
             fileType = AudioFileFormat.Type.SND;
-            audioFile = new File("/Users/ivanqueiroz/junk.snd");
         } else if (selectedMic.getFormat() == AudioFormatEnum.WAVE) {
             fileType = AudioFileFormat.Type.WAVE;
             System.out.println("Selecao de WAVE");
-            audioFile = new File("/Users/ivanqueiroz/junk.wav");
         }
         System.out.println("Iniciando captura");
         try {
@@ -133,31 +135,51 @@ public class MicControlDskImpl implements MicControl {
             try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
                 int numBytesRead;
 
-                byte[] data = new byte[line.getBufferSize() / 5];
+                int nBufferSize = BUFFER_LENGTH;
+
+                byte[] data = new byte[nBufferSize];
 
                 line.start();
 
                 while (!stopped) {
                     numBytesRead = line.read(data, 0, data.length);
                     out.write(data, 0, numBytesRead);
+                    short[] shortBuffer = byteArrayToShortArray(data);
+                    setVolValue(volProcess(shortBuffer));
                 }
             }
 
-            //AudioSystem.write(new AudioInputStream(line),fileType,audioFile);
         } catch (LineUnavailableException | IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void processSound(byte[] data) {
-        double vol;
-        double time = 2205;
-
-        for (int x = 0; x < data.length; x++) {
-            // printing the characters a cada 2205
-            System.out.print((char) data[x] + "   ");
+    private short[] byteArrayToShortArray(byte[] byteArray) {
+        int size = byteArray.length;
+        short[] shortArray = new short[size / 2];
+        
+        for (int i = 0; i < shortArray.length; i++) {
+            ByteBuffer bb = ByteBuffer.allocate(2);
+            bb.order(ByteOrder.BIG_ENDIAN);
+            bb.put(byteArray[2 * i]);
+            bb.put(byteArray[2 * i + 1]);
+            shortArray[i] = bb.getShort(0);
         }
-        System.out.println("   ");
+
+        return shortArray;
+    }
+
+    private double volProcess(short[] data) {
+        int v;
+        double vol = 0;
+
+        for (int i = 0; i < data.length; i++) {
+            v = data[i];
+            vol += v * v;
+        }
+        vol = (Math.sqrt(vol / data.length) / 327.68);
+
+        return vol;
 
     }
 
@@ -166,5 +188,26 @@ public class MicControlDskImpl implements MicControl {
         line.stop();
         stopped = true;
         line.close();
+    }
+
+    public void setVolValue(double volValue) {
+        this.volValue = volValue;
+        notifyObservers();
+    }
+
+    @Override
+    public void addObserver(MicControlObserver observer) {
+        observers.add(observer);
+    }
+
+    @Override
+    public void removeObserver(MicControlObserver observer) {
+        observers.remove(observer);
+    }
+
+    private void notifyObservers() {
+        observers.stream().forEach((observer) -> {
+            observer.update(this.volValue);
+        });
     }
 }

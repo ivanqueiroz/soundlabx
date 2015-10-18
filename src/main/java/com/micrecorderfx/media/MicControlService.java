@@ -68,4 +68,10 @@ public class MicControlService {
             micControl.stopCapture();
         }
     }
+    
+    public void addObserver(MicControlObserver observer){
+        if (micControl != null) {
+            micControl.addObserver(observer);
+        }
+    }
 }

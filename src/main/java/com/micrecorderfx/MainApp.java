@@ -21,10 +21,13 @@ public class MainApp extends Application {
         palco.setScene(new Scene(fxmlParent));
         palco.setTitle("MicRecorder");
         palco.show();
+        
+        
 
         if (micRecorderController != null) {
             micRecorderController.fillcmbMic();
             micRecorderController.initButtons();
+            micRecorderController.initTimelineChart();
         }
     }
 

@@ -12,4 +12,6 @@ public interface MicControl {
     public void setSelectedMic(Microphone selectedMic);
     public void captureAudio();
     public void stopCapture();
+    public void addObserver(MicControlObserver observer);
+    public void removeObserver(MicControlObserver observer);
 }
