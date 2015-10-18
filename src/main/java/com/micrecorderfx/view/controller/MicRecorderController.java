@@ -31,19 +31,19 @@ import javafx.util.Duration;
  * @author Ivan Queiroz <ivanqueiroz@gmail.com>
  */
 public class MicRecorderController implements Initializable, MicControlObserver {
-
+    
     @FXML
     public ComboBox cmbMic;
-
+    
     @FXML
     public Button btnGravar;
-
+    
     @FXML
     public Button btnParar;
-
+    
     @FXML
     public TextArea txtDebug;
-
+    
     @FXML
     public LineChart<Number, Double> chartVolume;
     
@@ -52,7 +52,7 @@ public class MicRecorderController implements Initializable, MicControlObserver 
     
     @FXML
     private NumberAxis xAxis;
-
+    
     private double volume;
     int count = 1;
     double teste = 3;
@@ -65,45 +65,51 @@ public class MicRecorderController implements Initializable, MicControlObserver 
      */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-
+        
     }
-
+    
     public void initButtons() {
         btnGravar.setOnAction(getBtnGravarAction());
         btnParar.setOnAction(getBtnPararAction());
     }
-
+    
     public void fillcmbMic() {
         cmbMic.getItems().clear();
         cmbMic.getItems().addAll(MicControlService.getInstance().listAllMics());
     }
-
+    
     public MicRecorderController() {
         animation = new Timeline();
-
+        
         animation.getKeyFrames()
                 .add(new KeyFrame(Duration.millis(1000 / 60), (ActionEvent actionEvent) -> {
                     serie.getData().add(new XYChart.Data<>(count++, getVolume()));
-
+                    
                     if (count % 100 == 0) {
                         serie.getData().remove(0);
-                        xAxis.setLowerBound(xAxis.getLowerBound() + 100);
-                        xAxis.setUpperBound(xAxis.getUpperBound() + 100);
+                        xAxis.setLowerBound(xAxis.getLowerBound() + 100.0);
+                        xAxis.setUpperBound(xAxis.getUpperBound() + 100.0);
+                        
+                        System.out.println("Upper"+xAxis.getUpperBound());
+                        System.out.println("Lower"+xAxis.getLowerBound());
                     }
-
+                    
                 }));
         animation.setCycleCount(Animation.INDEFINITE);
     }
-
+    
     public void initTimelineChart() {
         ObservableList<XYChart.Series<Number, Double>> lineChartData = FXCollections.observableArrayList();
         serie.getData().add(new XYChart.Data<>(0, 0.0));
-
+        xAxis.setLowerBound(0);
+        xAxis.setUpperBound(100);
+        xAxis.setTickUnit(10.0);
+        
         lineChartData.add(serie);
         chartVolume.setData(lineChartData);
         chartVolume.createSymbolsProperty();
     }
-
+    
     private EventHandler<ActionEvent> getBtnPararAction() {
         return (ActionEvent e) -> {
             btnGravar.setDisable(false);
@@ -112,7 +118,7 @@ public class MicRecorderController implements Initializable, MicControlObserver 
             MicControlService.getInstance().stopCapture();
         };
     }
-
+    
     private EventHandler<ActionEvent> getBtnGravarAction() {
         return (ActionEvent e) -> {
             btnGravar.setDisable(true);
@@ -122,7 +128,7 @@ public class MicRecorderController implements Initializable, MicControlObserver 
             Microphone mic = (Microphone) cmbMic.getValue();
             MicControlService.getInstance().addObserver(this);
             Task<Void> captureAudioTask = new Task<Void>() {
-
+                
                 @Override
                 protected Void call() throws Exception {
                     mic.setFormat(AudioFormatEnum.WAVE);
@@ -130,28 +136,28 @@ public class MicRecorderController implements Initializable, MicControlObserver 
                     MicControlService.getInstance().captureAudio();
                     return null;
                 }
-
+                
             };
             Thread t = new Thread(captureAudioTask);
             t.setDaemon(true);
             t.start();
         };
     }
-
+    
     @Override
     public void update(double volume) {
         this.volume = volume;
         Platform.runLater(() -> txtDebug.appendText("\nVolume: " + volume));
     }
-
+    
     private double getVolume() {
         return this.volume;
     }
-
+    
     public void play() {
         animation.play();
     }
-
+    
     public void stop() {
         animation.pause();
     }
