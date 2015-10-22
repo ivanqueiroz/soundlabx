@@ -63,10 +63,10 @@
                 </Label>
                 <LineChart fx:id="chartVolume" animated="false" cache="true" cacheHint="SPEED" createSymbols="false" legendVisible="false" GridPane.columnIndex="1" GridPane.rowIndex="1" cacheShape="true" >
                     <xAxis>
-                        <NumberAxis fx:id="xAxis" label="Tempo" lowerBound="0" tickUnit="1" upperBound="30" cache="true" cacheHint="SPEED" />
+                        <NumberAxis autoRanging="false"  fx:id="xAxis" label="Tempo" forceZeroInRange="false" cache="true" cacheHint="SPEED" />
                     </xAxis>
                     <yAxis>
-                        <NumberAxis autoRanging="false" label="Volume" tickUnit="5"  cache="true" cacheHint="SPEED" />
+                        <NumberAxis autoRanging="false" label="Volume" lowerBound="0" tickUnit="5" upperBound="100" cache="true" cacheHint="SPEED" />
                     </yAxis>
                 </LineChart>
             </children>

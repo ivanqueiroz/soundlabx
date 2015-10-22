@@ -65,7 +65,7 @@ public class MicRecorderController implements Initializable, MicControlObserver 
      */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        
+        MicControlService.getInstance().addObserver(this);
     }
     
     public void initButtons() {
@@ -85,13 +85,10 @@ public class MicRecorderController implements Initializable, MicControlObserver 
                 .add(new KeyFrame(Duration.millis(1000 / 60), (ActionEvent actionEvent) -> {
                     serie.getData().add(new XYChart.Data<>(count++, getVolume()));
                     
-                    if (count % 100 == 0) {
+                    if (count > 100) {
                         serie.getData().remove(0);
-                        xAxis.setLowerBound(xAxis.getLowerBound() + 100.0);
-                        xAxis.setUpperBound(xAxis.getUpperBound() + 100.0);
-                        
-                        System.out.println("Upper"+xAxis.getUpperBound());
-                        System.out.println("Lower"+xAxis.getLowerBound());
+                        xAxis.setLowerBound(xAxis.getLowerBound() + 1);
+                        xAxis.setUpperBound(xAxis.getUpperBound() + 1);
                     }
                     
                 }));
@@ -102,7 +99,7 @@ public class MicRecorderController implements Initializable, MicControlObserver 
         ObservableList<XYChart.Series<Number, Double>> lineChartData = FXCollections.observableArrayList();
         serie.getData().add(new XYChart.Data<>(0, 0.0));
         xAxis.setLowerBound(0);
-        xAxis.setUpperBound(100);
+        xAxis.setUpperBound(60);
         xAxis.setTickUnit(10.0);
         
         lineChartData.add(serie);
@@ -126,7 +123,7 @@ public class MicRecorderController implements Initializable, MicControlObserver 
             txtDebug.appendText("Vai obter o valor do combo");
             animation.play();
             Microphone mic = (Microphone) cmbMic.getValue();
-            MicControlService.getInstance().addObserver(this);
+            
             Task<Void> captureAudioTask = new Task<Void>() {
                 
                 @Override
