@@ -74,4 +74,10 @@ public class MicControlService {
             micControl.addObserver(observer);
         }
     }
+    
+    public void setMicVolume(float value){
+        if (micControl != null) {
+            micControl.setMicVolume(value);
+        }
+    }
 }

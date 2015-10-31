@@ -10,6 +10,8 @@ import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
@@ -22,6 +24,7 @@ import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Slider;
 import javafx.scene.control.TextArea;
 import javafx.util.Duration;
 
@@ -47,6 +50,9 @@ public class MicRecorderController implements Initializable, MicControlObserver 
     @FXML
     public LineChart<Number, Double> chartVolume;
     
+    @FXML
+    public Slider slVolume;
+    
     private final Timeline animation;
     private LineChart.Series<Number, Double> serie = new XYChart.Series<>();
     
@@ -55,7 +61,6 @@ public class MicRecorderController implements Initializable, MicControlObserver 
     
     private double volume;
     int count = 1;
-    double teste = 3;
 
     /**
      * Initializes the controller class.
@@ -66,6 +71,15 @@ public class MicRecorderController implements Initializable, MicControlObserver 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         MicControlService.getInstance().addObserver(this);
+        slVolume.valueProperty().addListener(new ChangeListener<Number>() {
+            @Override
+            public void changed(ObservableValue<? extends Number> ov,
+                Number old_val, Number new_val) {
+                
+                    txtDebug.appendText(""+new_val.floatValue());
+                    MicControlService.getInstance().setMicVolume(new_val.floatValue());
+            }
+        });
     }
     
     public void initButtons() {

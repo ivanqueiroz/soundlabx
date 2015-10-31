@@ -3,19 +3,31 @@ package com.micrecorderfx.dsk.media;
 import com.micrecorderfx.media.MicControl;
 import com.micrecorderfx.media.MicControlObserver;
 import com.micrecorderfx.media.Microphone;
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.BooleanControl;
+import javax.sound.sampled.CompoundControl;
+import javax.sound.sampled.Control;
 import javax.sound.sampled.DataLine;
+import javax.sound.sampled.FloatControl;
+import javax.sound.sampled.FloatControl.Type;
 import javax.sound.sampled.Line;
+import javax.sound.sampled.Line.Info;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.Mixer;
+import javax.sound.sampled.Port;
 import javax.sound.sampled.TargetDataLine;
 
 /**
@@ -199,5 +211,96 @@ public class MicControlDskImpl implements MicControl {
         observers.stream().forEach((observer) -> {
             observer.update(this.volValue);
         });
+    }
+
+    @Override
+    public void setMicVolume(float value) {
+        if (line.isOpen()) {
+            try {
+                setVolume(value);
+            } catch (LineUnavailableException ex) {
+                Logger.getLogger(MicControlDskImpl.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        } else {
+            System.out.println("Line is not open!");
+        }
+    }
+
+    private void setVolume(final float volume) throws LineUnavailableException {
+        javax.sound.sampled.Mixer.Info[] mixerList = AudioSystem.getMixerInfo();
+        for (javax.sound.sampled.Mixer.Info mixerInfo : mixerList) {
+            
+            Mixer mixer = AudioSystem.getMixer(mixerInfo);
+            
+            if (mixer.isLineSupported(Port.Info.LINE_IN)) {
+                setLineVolume(mixer.getLine(Port.Info.LINE_IN), volume);
+            }
+            if (mixer.isLineSupported(Port.Info.MICROPHONE)) {
+                setLineVolume(mixer.getLine(Port.Info.MICROPHONE), volume);
+            }
+            
+            Info[] infoList = mixer.getTargetLineInfo();
+            for (Info info : infoList) {
+                Line line = mixer.getLine(info);
+            
+                if (!line.getLineInfo().toString().startsWith("SPEAKER")) {
+                    setLineVolume(line, volume);
+                }
+            }
+        }
+    }
+
+    private void setLineVolume(final Line line, final float volume) throws LineUnavailableException {
+        try {
+            if (line != null) {
+                line.open();  // open line needed to access all controls
+                Control[] controls = line.getControls();
+                for (Control control : controls) {
+                    if (control.getType() == FloatControl.Type.VOLUME
+                            && control instanceof FloatControl) {
+                        setControlVolume((FloatControl) control, volume);
+                    } else if (control instanceof CompoundControl) {
+                        setControlVolume(((CompoundControl) control).getMemberControls(), volume);
+                    }
+                }
+            }
+        } finally {
+            if (line != null) {
+                line.close();
+            }
+        }
+        return;
+    }
+
+    private void setControlVolume(final Control[] memberControls, float volume) {
+        // look for boolean controls to capture which control is selected
+        int booleanIndex = -1;
+        for (final Control control : memberControls) {
+            if (control instanceof BooleanControl) {
+                booleanIndex++;
+                BooleanControl booleanControl = (BooleanControl) control;
+                if (booleanControl.getValue()) {
+                    // the nth boolean control maps to the nth volume control (hopefully!)
+                    int index = -1;
+                    for (final Control volumeControl : memberControls) {
+                        if (volumeControl instanceof FloatControl && volumeControl.getType() == Type.VOLUME) {
+                            index++;
+                            if (index == booleanIndex) {
+                                setControlVolume((FloatControl) volumeControl, volume);
+                            }
+                        }
+                    }
+                    return;
+                }
+            }
+        }
+    }
+
+    private void setControlVolume(final FloatControl control, final float volume) {
+        float min = control.getMinimum();
+        float range = control.getMaximum() - min;
+        float newValue = min + (volume * range);
+        control.setValue(newValue);
+        return;
     }
 }
