@@ -1,5 +1,6 @@
 package com.micrecorderfx.dsk.media;
 
+import com.micrecorderfx.dsk.util.OSUtils;
 import com.micrecorderfx.media.MicControl;
 import com.micrecorderfx.media.MicControlObserver;
 import com.micrecorderfx.media.Microphone;
@@ -216,35 +217,63 @@ public class MicControlDskImpl implements MicControl {
     @Override
     public void setMicVolume(float value) {
         if (line.isOpen()) {
-            try {
-                setVolume(value);
-            } catch (LineUnavailableException ex) {
-                Logger.getLogger(MicControlDskImpl.class.getName()).log(Level.SEVERE, null, ex);
+            if (OSUtils.isMac()) {
+                setMasterVolumeOsx(value);
+            }if(OSUtils.isWindows()){
+                try {
+                    setVolume(value);
+                } catch (LineUnavailableException ex) {
+                    Logger.getLogger(MicControlDskImpl.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
+
         } else {
             System.out.println("Line is not open!");
+        }
+    }
+
+    public void setMasterVolumeOsx(float value) {
+        String command = "set volume " + value;
+        try {
+            ProcessBuilder pb = new ProcessBuilder("osascript", "-e", command);
+            pb.directory(new File("/usr/bin"));
+            System.out.println(command);
+            StringBuffer output = new StringBuffer();
+            Process p = pb.start();
+            p.waitFor();
+
+            BufferedReader reader
+                    = new BufferedReader(new InputStreamReader(p.getInputStream()));
+
+            String lineStr;
+            while ((lineStr = reader.readLine()) != null) {
+                output.append(lineStr).append("\n");
+            }
+            System.out.println(output);
+        } catch (IOException | InterruptedException e) {
+            System.out.println(e);
         }
     }
 
     private void setVolume(final float volume) throws LineUnavailableException {
         javax.sound.sampled.Mixer.Info[] mixerList = AudioSystem.getMixerInfo();
         for (javax.sound.sampled.Mixer.Info mixerInfo : mixerList) {
-            
+
             Mixer mixer = AudioSystem.getMixer(mixerInfo);
-            
+
             if (mixer.isLineSupported(Port.Info.LINE_IN)) {
                 setLineVolume(mixer.getLine(Port.Info.LINE_IN), volume);
             }
             if (mixer.isLineSupported(Port.Info.MICROPHONE)) {
                 setLineVolume(mixer.getLine(Port.Info.MICROPHONE), volume);
             }
-            
+
             Info[] infoList = mixer.getTargetLineInfo();
             for (Info info : infoList) {
-                Line line = mixer.getLine(info);
-            
-                if (!line.getLineInfo().toString().startsWith("SPEAKER")) {
-                    setLineVolume(line, volume);
+                Line lineIn = mixer.getLine(info);
+
+                if (!lineIn.getLineInfo().toString().startsWith("SPEAKER")) {
+                    setLineVolume(lineIn, volume);
                 }
             }
         }
@@ -269,7 +298,6 @@ public class MicControlDskImpl implements MicControl {
                 line.close();
             }
         }
-        return;
     }
 
     private void setControlVolume(final Control[] memberControls, float volume) {
@@ -301,6 +329,5 @@ public class MicControlDskImpl implements MicControl {
         float range = control.getMaximum() - min;
         float newValue = min + (volume * range);
         control.setValue(newValue);
-        return;
     }
 }
