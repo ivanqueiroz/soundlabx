@@ -44,7 +44,7 @@
                                 </Button>
                             </children>
                         </HBox>
-                        <Slider fx:id="slVolume" majorTickUnit="2.0" max="16.0" minorTickCount="1" showTickLabels="true" showTickMarks="true" snapToTicks="true" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                        <Slider fx:id="slVolume" blockIncrement="1.0" minorTickCount="1" showTickLabels="true" showTickMarks="true" snapToTicks="true" GridPane.columnIndex="1" GridPane.rowIndex="2">
                             <GridPane.margin>
                                 <Insets right="10.0" />
                             </GridPane.margin>

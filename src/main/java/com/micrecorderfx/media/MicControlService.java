@@ -80,4 +80,12 @@ public class MicControlService {
             micControl.setMicVolume(value);
         }
     }
+    
+    public float gettMicVolume(){
+        if (micControl != null) {
+            return micControl.getMicVolume();
+        }
+        
+        return 0;
+    }
 }

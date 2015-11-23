@@ -10,6 +10,7 @@ public interface MicControl {
     
     public List<Microphone> listAllMics();
     public void setSelectedMic(Microphone selectedMic);
+    public float getMicVolume();
     public void setMicVolume(float value);
     public void captureAudio();
     public void stopCapture();

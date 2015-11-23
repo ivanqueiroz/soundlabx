@@ -98,9 +98,9 @@ public class MicControlDskImpl implements MicControl {
 
     @Override
     public void setSelectedMic(Microphone selectedMic) {
-        System.out.println("Chamou setSelectedMic()");
+        System.out.println("Chamou setSelectedMic() ");
         if (selectedMic != null) {
-            System.out.println("Chamou setSelectedMic()" + selectedMic.getName());
+            System.out.println("Chamou setSelectedMic() " + selectedMic.getName());
             final Mixer.Info info = getMixerInfo().get(selectedMic.getName());
             System.out.println("Info: " + info.getName());
             this.line = getTargetDataLine(info.getName());
@@ -216,10 +216,11 @@ public class MicControlDskImpl implements MicControl {
 
     @Override
     public void setMicVolume(float value) {
-        if (line.isOpen()) {
+        if (line != null && line.isOpen()) {
             if (OSUtils.isMac()) {
                 setMasterVolumeOsx(value);
-            }if(OSUtils.isWindows()){
+            }
+            if (OSUtils.isWindows()) {
                 try {
                     setVolume(value);
                 } catch (LineUnavailableException ex) {
@@ -233,7 +234,7 @@ public class MicControlDskImpl implements MicControl {
     }
 
     public void setMasterVolumeOsx(float value) {
-        String command = "set volume " + value;
+        String command = "set volume input volume " + value;
         try {
             ProcessBuilder pb = new ProcessBuilder("osascript", "-e", command);
             pb.directory(new File("/usr/bin"));
@@ -329,5 +330,41 @@ public class MicControlDskImpl implements MicControl {
         float range = control.getMaximum() - min;
         float newValue = min + (volume * range);
         control.setValue(newValue);
+    }
+
+    @Override
+    public float getMicVolume() {
+        if (OSUtils.isMac()) {
+            return getMicVolumeOsx();
+        }
+        if (OSUtils.isWindows()) {
+            return 0;
+        }
+
+        return 0;
+    }
+
+    public float getMicVolumeOsx() {
+        String command = "set ovol to input volume of (get volume settings)";
+        try {
+            ProcessBuilder pb = new ProcessBuilder("osascript", "-e", command);
+            pb.directory(new File("/usr/bin"));
+            System.out.println(command);
+            StringBuilder output = new StringBuilder();
+            Process p = pb.start();
+            p.waitFor();
+
+            BufferedReader reader
+                    = new BufferedReader(new InputStreamReader(p.getInputStream()));
+
+            String lineStr;
+            while ((lineStr = reader.readLine()) != null) {
+                output.append(lineStr).append("\n");
+            }
+            return Float.valueOf(output.toString());
+        } catch (IOException | InterruptedException e) {
+            System.out.println(e);
+        }
+        return 0;
     }
 }
