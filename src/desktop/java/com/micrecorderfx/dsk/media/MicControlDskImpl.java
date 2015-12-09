@@ -25,7 +25,6 @@ import javax.sound.sampled.DataLine;
 import javax.sound.sampled.FloatControl;
 import javax.sound.sampled.FloatControl.Type;
 import javax.sound.sampled.Line;
-import javax.sound.sampled.Line.Info;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.Mixer;
 import javax.sound.sampled.Port;
@@ -37,9 +36,10 @@ import javax.sound.sampled.TargetDataLine;
  */
 public class MicControlDskImpl implements MicControl {
 
-    private TargetDataLine line;
+    private TargetDataLine targetDataLine;
     private Microphone selectedMic;
     private boolean stopped = true;
+    private Port micPort = null;
 
     //11025/5 = 2205 samples em 200ms com samplesize de 16bits = 4410
     private static final int BUFFER_LENGTH = 4410;
@@ -51,13 +51,40 @@ public class MicControlDskImpl implements MicControl {
         Mixer.Info[] mixerInfos = AudioSystem.getMixerInfo();
         for (Mixer.Info info : mixerInfos) {
             out.put(info.getName(), info);
-
         }
         return out;
     }
 
+    private Port getMicPort(String strMixerName) {
+        System.out.println("getMicPort");
+        Port portMic = null;
+        StringBuilder chave = new StringBuilder("Port ");
+        chave.append(strMixerName);
+        if (chave.length() > 36) {
+           chave = new StringBuilder(chave.substring(0, 36));
+        }
+        Mixer.Info[] mixerInfos = AudioSystem.getMixerInfo();
+
+        for (Mixer.Info mixerInfo : mixerInfos) {
+            Mixer mixer = AudioSystem.getMixer(mixerInfo);
+            int maxLines = mixer.getMaxLines(Port.Info.MICROPHONE);
+            String nomePort = mixerInfo.getName();
+            if (maxLines > 0 && chave.toString().equals(nomePort)) {
+
+                try {
+                    portMic = (Port) mixer.getLine(Port.Info.MICROPHONE);
+                } catch (LineUnavailableException ex) {
+                    ex.printStackTrace();
+                }
+
+            }
+        }
+
+        return portMic;
+    }
+
     private TargetDataLine getTargetDataLine(String strMixerName) {
-        TargetDataLine targetDataLine = null;
+        TargetDataLine micLine = null;
         DataLine.Info info = new DataLine.Info(TargetDataLine.class,
                 getAudioFormat());
         try {
@@ -67,30 +94,32 @@ public class MicControlDskImpl implements MicControl {
                     return null;
                 }
                 Mixer mixer = AudioSystem.getMixer(mixerInfo);
-                targetDataLine = (TargetDataLine) mixer.getLine(info);
+                micLine = (TargetDataLine) mixer.getLine(info);
             } else {
-                targetDataLine = (TargetDataLine) AudioSystem.getLine(info);
+                micLine = (TargetDataLine) AudioSystem.getLine(info);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        return targetDataLine;
+        return micLine;
     }
 
     @Override
     public List<Microphone> listAllMics() {
         List<Microphone> micsInfo = new ArrayList<>();
         Mixer.Info[] mixerInfos = AudioSystem.getMixerInfo();
+        //Percorrendo lista de mixers do computador
         for (Mixer.Info info : mixerInfos) {
-            Mixer m = AudioSystem.getMixer(info);
-            Line.Info[] lineInfos = m.getTargetLineInfo();
+            Mixer mixer = AudioSystem.getMixer(info);
+            Line.Info[] lineInfos = mixer.getTargetLineInfo();
+            MicrofoneDskImpl micInfo = new MicrofoneDskImpl();
             if (lineInfos.length > 0 && lineInfos[0].getLineClass().equals(TargetDataLine.class)) {
-                Microphone micInfo = new Microphone();
                 micInfo.setDescription(info.getDescription());
                 micInfo.setName(info.getName());
                 micsInfo.add(micInfo);
             }
+
         }
 
         return micsInfo;
@@ -103,8 +132,9 @@ public class MicControlDskImpl implements MicControl {
             System.out.println("Chamou setSelectedMic() " + selectedMic.getName());
             final Mixer.Info info = getMixerInfo().get(selectedMic.getName());
             System.out.println("Info: " + info.getName());
-            this.line = getTargetDataLine(info.getName());
+            this.targetDataLine = getTargetDataLine(info.getName());
             this.selectedMic = selectedMic;
+            this.micPort = getMicPort(info.getName());
         }
 
     }
@@ -125,7 +155,7 @@ public class MicControlDskImpl implements MicControl {
         System.out.println("Chamando captureAudio() da implementacao");
         stopped = false;
 
-        if (!AudioSystem.isLineSupported(line.getLineInfo())) {
+        if (!AudioSystem.isLineSupported(targetDataLine.getLineInfo())) {
             System.out.println("Line not supported");
             System.exit(0);
 
@@ -133,7 +163,7 @@ public class MicControlDskImpl implements MicControl {
 
         System.out.println("Iniciando captura");
         try {
-            line.open(getAudioFormat());
+            targetDataLine.open(getAudioFormat());
 
             try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
                 int numBytesRead;
@@ -142,10 +172,10 @@ public class MicControlDskImpl implements MicControl {
 
                 byte[] data = new byte[nBufferSize];
 
-                line.start();
+                targetDataLine.start();
 
                 while (!stopped) {
-                    numBytesRead = line.read(data, 0, data.length);
+                    numBytesRead = targetDataLine.read(data, 0, data.length);
                     out.write(data, 0, numBytesRead);
                     short[] shortBuffer = byteArrayToShortArray(data);
                     setVolValue(volProcess(shortBuffer));
@@ -188,9 +218,9 @@ public class MicControlDskImpl implements MicControl {
 
     @Override
     public void stopCapture() {
-        line.stop();
+        targetDataLine.stop();
         stopped = true;
-        line.close();
+        targetDataLine.close();
     }
 
     public void setVolValue(double volValue) {
@@ -216,7 +246,7 @@ public class MicControlDskImpl implements MicControl {
 
     @Override
     public void setMicVolume(float value) {
-        if (line != null && line.isOpen()) {
+        if (targetDataLine != null && targetDataLine.isOpen()) {
             if (OSUtils.isMac()) {
                 setMasterVolumeOsx(value);
             }
@@ -257,79 +287,25 @@ public class MicControlDskImpl implements MicControl {
     }
 
     private void setVolume(final float volume) throws LineUnavailableException {
-        javax.sound.sampled.Mixer.Info[] mixerList = AudioSystem.getMixerInfo();
-        for (javax.sound.sampled.Mixer.Info mixerInfo : mixerList) {
-
-            Mixer mixer = AudioSystem.getMixer(mixerInfo);
-
-            if (mixer.isLineSupported(Port.Info.LINE_IN)) {
-                setLineVolume(mixer.getLine(Port.Info.LINE_IN), volume);
-            }
-            if (mixer.isLineSupported(Port.Info.MICROPHONE)) {
-                setLineVolume(mixer.getLine(Port.Info.MICROPHONE), volume);
-            }
-
-            Info[] infoList = mixer.getTargetLineInfo();
-            for (Info info : infoList) {
-                Line lineIn = mixer.getLine(info);
-
-                if (!lineIn.getLineInfo().toString().startsWith("SPEAKER")) {
-                    setLineVolume(lineIn, volume);
+        System.out.println("Chamando volume do windows!");
+        FloatControl volCtrl = null;
+        this.micPort.open();
+        final Control control = this.micPort.getControls()[0];
+        if (control instanceof CompoundControl) {
+            CompoundControl cc = (CompoundControl) this.micPort.getControls()[0];
+            Control[] controls = cc.getMemberControls();
+            for (Control c : controls) {
+                if (c instanceof FloatControl) {
+                    volCtrl = (FloatControl) c;
+                    volCtrl.setValue((float) volume / 100);
                 }
             }
+        } else if (control instanceof FloatControl) {
+            volCtrl = (FloatControl) this.micPort.getControls()[0];
+            System.out.println(volCtrl.getValue());
+            volCtrl.setValue((float) volume / 100);
         }
-    }
 
-    private void setLineVolume(final Line line, final float volume) throws LineUnavailableException {
-        try {
-            if (line != null) {
-                line.open();  // open line needed to access all controls
-                Control[] controls = line.getControls();
-                for (Control control : controls) {
-                    if (control.getType() == FloatControl.Type.VOLUME
-                            && control instanceof FloatControl) {
-                        setControlVolume((FloatControl) control, volume);
-                    } else if (control instanceof CompoundControl) {
-                        setControlVolume(((CompoundControl) control).getMemberControls(), volume);
-                    }
-                }
-            }
-        } finally {
-            if (line != null) {
-                line.close();
-            }
-        }
-    }
-
-    private void setControlVolume(final Control[] memberControls, float volume) {
-        // look for boolean controls to capture which control is selected
-        int booleanIndex = -1;
-        for (final Control control : memberControls) {
-            if (control instanceof BooleanControl) {
-                booleanIndex++;
-                BooleanControl booleanControl = (BooleanControl) control;
-                if (booleanControl.getValue()) {
-                    // the nth boolean control maps to the nth volume control (hopefully!)
-                    int index = -1;
-                    for (final Control volumeControl : memberControls) {
-                        if (volumeControl instanceof FloatControl && volumeControl.getType() == Type.VOLUME) {
-                            index++;
-                            if (index == booleanIndex) {
-                                setControlVolume((FloatControl) volumeControl, volume);
-                            }
-                        }
-                    }
-                    return;
-                }
-            }
-        }
-    }
-
-    private void setControlVolume(final FloatControl control, final float volume) {
-        float min = control.getMinimum();
-        float range = control.getMaximum() - min;
-        float newValue = min + (volume * range);
-        control.setValue(newValue);
     }
 
     @Override
@@ -338,9 +314,34 @@ public class MicControlDskImpl implements MicControl {
             return getMicVolumeOsx();
         }
         if (OSUtils.isWindows()) {
-            return 0;
+            return getMicVolumeWindows();
         }
 
+        return 0;
+    }
+    
+    public float getMicVolumeWindows(){
+        FloatControl volCtrl = null;
+        try {
+            this.micPort.open();
+        } catch (LineUnavailableException ex) {
+            ex.printStackTrace();
+        }
+        final Control control = this.micPort.getControls()[0];
+        if (control instanceof CompoundControl) {
+            CompoundControl cc = (CompoundControl) this.micPort.getControls()[0];
+            Control[] controls = cc.getMemberControls();
+            for (Control c : controls) {
+                if (c instanceof FloatControl) {
+                    volCtrl = (FloatControl) c;
+                    return volCtrl.getValue();
+                }
+            }
+        } else if (control instanceof FloatControl) {
+            volCtrl = (FloatControl) this.micPort.getControls()[0];
+            return volCtrl.getValue();
+        }
+        
         return 0;
     }
 
