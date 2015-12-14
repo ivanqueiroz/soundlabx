@@ -61,7 +61,7 @@ public class MicControlDskImpl implements MicControl {
         StringBuilder chave = new StringBuilder("Port ");
         chave.append(strMixerName);
         if (chave.length() > 36) {
-           chave = new StringBuilder(chave.substring(0, 36));
+            chave = new StringBuilder(chave.substring(0, 36));
         }
         Mixer.Info[] mixerInfos = AudioSystem.getMixerInfo();
 
@@ -246,16 +246,11 @@ public class MicControlDskImpl implements MicControl {
 
     @Override
     public void setMicVolume(float value) {
-        if (targetDataLine != null && targetDataLine.isOpen()) {
-            if (OSUtils.isMac()) {
-                setMasterVolumeOsx(value);
-            }
-            if (OSUtils.isWindows()) {
-                try {
-                    setVolume(value);
-                } catch (LineUnavailableException ex) {
-                    Logger.getLogger(MicControlDskImpl.class.getName()).log(Level.SEVERE, null, ex);
-                }
+        if (micPort != null && micPort.isOpen()) {
+            try {
+                setVolume(value);
+            } catch (LineUnavailableException ex) {
+                System.err.println(ex);
             }
 
         } else {
@@ -319,8 +314,8 @@ public class MicControlDskImpl implements MicControl {
 
         return 0;
     }
-    
-    public float getMicVolumeWindows(){
+
+    public float getMicVolumeWindows() {
         FloatControl volCtrl = null;
         try {
             this.micPort.open();
@@ -341,7 +336,7 @@ public class MicControlDskImpl implements MicControl {
             volCtrl = (FloatControl) this.micPort.getControls()[0];
             return volCtrl.getValue();
         }
-        
+
         return 0;
     }
 
