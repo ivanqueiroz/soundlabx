@@ -1,14 +1,10 @@
 package com.micrecorderfx.dsk.media;
 
-import com.micrecorderfx.dsk.util.OSUtils;
 import com.micrecorderfx.media.MicControl;
 import com.micrecorderfx.media.MicControlObserver;
 import com.micrecorderfx.media.Microphone;
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
@@ -18,12 +14,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.BooleanControl;
 import javax.sound.sampled.CompoundControl;
 import javax.sound.sampled.Control;
 import javax.sound.sampled.DataLine;
 import javax.sound.sampled.FloatControl;
-import javax.sound.sampled.FloatControl.Type;
 import javax.sound.sampled.Line;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.Mixer;
@@ -61,7 +55,7 @@ public class MicControlDskImpl implements MicControl {
         StringBuilder chave = new StringBuilder("Port ");
         chave.append(strMixerName);
         if (chave.length() > 36) {
-           chave = new StringBuilder(chave.substring(0, 36));
+            chave = new StringBuilder(chave.substring(0, 36));
         }
         Mixer.Info[] mixerInfos = AudioSystem.getMixerInfo();
 
@@ -246,48 +240,15 @@ public class MicControlDskImpl implements MicControl {
 
     @Override
     public void setMicVolume(float value) {
-        if (targetDataLine != null && targetDataLine.isOpen()) {
-            if (OSUtils.isMac()) {
-                setMasterVolumeOsx(value);
-            }
-            if (OSUtils.isWindows()) {
-                try {
-                    setVolume(value);
-                } catch (LineUnavailableException ex) {
-                    Logger.getLogger(MicControlDskImpl.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
 
-        } else {
-            System.out.println("Line is not open!");
-        }
-    }
-
-    public void setMasterVolumeOsx(float value) {
-        String command = "set volume input volume " + value;
         try {
-            ProcessBuilder pb = new ProcessBuilder("osascript", "-e", command);
-            pb.directory(new File("/usr/bin"));
-            System.out.println(command);
-            StringBuffer output = new StringBuffer();
-            Process p = pb.start();
-            p.waitFor();
-
-            BufferedReader reader
-                    = new BufferedReader(new InputStreamReader(p.getInputStream()));
-
-            String lineStr;
-            while ((lineStr = reader.readLine()) != null) {
-                output.append(lineStr).append("\n");
-            }
-            System.out.println(output);
-        } catch (IOException | InterruptedException e) {
-            System.out.println(e);
+            setVolume(value);
+        } catch (LineUnavailableException ex) {
+            Logger.getLogger(MicControlDskImpl.class.getName()).log(Level.SEVERE, null, ex);
         }
-    }
 
+    }
     private void setVolume(final float volume) throws LineUnavailableException {
-        System.out.println("Chamando volume do windows!");
         FloatControl volCtrl = null;
         this.micPort.open();
         final Control control = this.micPort.getControls()[0];
@@ -310,17 +271,6 @@ public class MicControlDskImpl implements MicControl {
 
     @Override
     public float getMicVolume() {
-        if (OSUtils.isMac()) {
-            return getMicVolumeOsx();
-        }
-        if (OSUtils.isWindows()) {
-            return getMicVolumeWindows();
-        }
-
-        return 0;
-    }
-    
-    public float getMicVolumeWindows(){
         FloatControl volCtrl = null;
         try {
             this.micPort.open();
@@ -341,31 +291,7 @@ public class MicControlDskImpl implements MicControl {
             volCtrl = (FloatControl) this.micPort.getControls()[0];
             return volCtrl.getValue();
         }
-        
-        return 0;
-    }
 
-    public float getMicVolumeOsx() {
-        String command = "set ovol to input volume of (get volume settings)";
-        try {
-            ProcessBuilder pb = new ProcessBuilder("osascript", "-e", command);
-            pb.directory(new File("/usr/bin"));
-            System.out.println(command);
-            StringBuilder output = new StringBuilder();
-            Process p = pb.start();
-            p.waitFor();
-
-            BufferedReader reader
-                    = new BufferedReader(new InputStreamReader(p.getInputStream()));
-
-            String lineStr;
-            while ((lineStr = reader.readLine()) != null) {
-                output.append(lineStr).append("\n");
-            }
-            return Float.valueOf(output.toString());
-        } catch (IOException | InterruptedException e) {
-            System.out.println(e);
-        }
         return 0;
     }
 }

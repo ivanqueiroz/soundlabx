@@ -71,7 +71,7 @@ public class MicRecorderController implements Initializable, MicControlObserver 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         MicControlService.getInstance().addObserver(this);
-        slVolume.setDisable(true);
+        //slVolume.setDisable(true);
         slVolume.valueProperty().addListener(new ChangeListener<Number>() {
             @Override
             public void changed(ObservableValue<? extends Number> ov,
@@ -142,7 +142,7 @@ public class MicRecorderController implements Initializable, MicControlObserver 
     private EventHandler<ActionEvent> getBtnPararAction() {
         return (ActionEvent e) -> {
             btnGravar.setDisable(false);
-            slVolume.setDisable(true);
+            //slVolume.setDisable(true);
             btnParar.setDisable(true);
             animation.stop();
             MicControlService.getInstance().stopCapture();
@@ -151,7 +151,7 @@ public class MicRecorderController implements Initializable, MicControlObserver 
     
     private EventHandler<ActionEvent> getBtnGravarAction() {
         return (ActionEvent e) -> {
-            slVolume.setDisable(false);
+            //slVolume.setDisable(false);
             btnGravar.setDisable(true);
             btnParar.setDisable(false);
             txtDebug.appendText("Vai obter o valor do combo");
