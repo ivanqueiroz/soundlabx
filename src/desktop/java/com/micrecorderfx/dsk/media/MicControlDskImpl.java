@@ -10,8 +10,6 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.CompoundControl;
@@ -240,14 +238,15 @@ public class MicControlDskImpl implements MicControl {
 
     @Override
     public void setMicVolume(float value) {
-
-        try {
-            setVolume(value);
-        } catch (LineUnavailableException ex) {
-            Logger.getLogger(MicControlDskImpl.class.getName()).log(Level.SEVERE, null, ex);
+        if (micPort != null && micPort.isOpen()) {
+            try {
+                setVolume(value);
+            } catch (LineUnavailableException ex) {
+                System.err.println(ex);
+            }
         }
-
     }
+
     private void setVolume(final float volume) throws LineUnavailableException {
         FloatControl volCtrl = null;
         this.micPort.open();
@@ -271,6 +270,7 @@ public class MicControlDskImpl implements MicControl {
 
     @Override
     public float getMicVolume() {
+
         FloatControl volCtrl = null;
         try {
             this.micPort.open();
@@ -291,7 +291,6 @@ public class MicControlDskImpl implements MicControl {
             volCtrl = (FloatControl) this.micPort.getControls()[0];
             return volCtrl.getValue();
         }
-
         return 0;
     }
 }
