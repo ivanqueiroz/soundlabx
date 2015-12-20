@@ -13,7 +13,7 @@ public class MainApp extends Application {
 
     @Override
     public void start(Stage palco) throws IOException {
-        URL arquivoFXML = getClass().getResource("MicRecorder.fxml");
+        URL arquivoFXML = getClass().getResource("/assets/MicRecorder.fxml");
         FXMLLoader loader = new FXMLLoader(arquivoFXML);
         Parent fxmlParent = (Parent) loader.load();
         MicRecorderController micRecorderController = loader.getController();

@@ -10,7 +10,6 @@ import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -72,14 +71,9 @@ public class MicRecorderController implements Initializable, MicControlObserver 
     public void initialize(URL url, ResourceBundle rb) {
         MicControlService.getInstance().addObserver(this);
         //slVolume.setDisable(true);
-        slVolume.valueProperty().addListener(new ChangeListener<Number>() {
-            @Override
-            public void changed(ObservableValue<? extends Number> ov,
-                    Number old_val, Number new_val) {
-                
-                txtDebug.appendText("" + new_val.floatValue());
-                MicControlService.getInstance().setMicVolume(new_val.floatValue());
-            }
+        slVolume.valueProperty().addListener((ObservableValue<? extends Number> ov, Number old_val, Number new_val) -> {
+            txtDebug.appendText("" + new_val.floatValue());
+            MicControlService.getInstance().setMicVolume(new_val.floatValue());
         });
     }
     
@@ -97,16 +91,13 @@ public class MicRecorderController implements Initializable, MicControlObserver 
     public void fillcmbMic() {
         cmbMic.getItems().clear();
         cmbMic.getItems().addAll(MicControlService.getInstance().listAllMics());
-        cmbMic.valueProperty().addListener(new ChangeListener() {
-            @Override
-            public void changed(ObservableValue observable, Object oldValue, Object newValue) {
-                Microphone mic = (Microphone) cmbMic.getValue();
-                mic.setFormat(AudioFormatEnum.WAVE);
-                MicControlService.getInstance().setSelectedMic(mic);
-                float volumeMic = MicControlService.getInstance().gettMicVolume();
-                txtDebug.appendText("Vai obter o valor do slider: " + volumeMic);
-                slVolume.setValue(volumeMic * 100);
-            }
+        cmbMic.valueProperty().addListener((ObservableValue observable, Object oldValue, Object newValue) -> {
+            Microphone mic = (Microphone) cmbMic.getValue();
+            mic.setFormat(AudioFormatEnum.WAVE);
+            MicControlService.getInstance().setSelectedMic(mic);
+            float volumeMic = MicControlService.getInstance().gettMicVolume();
+            txtDebug.appendText("Vai obter o valor do slider: " + volumeMic);
+            slVolume.setValue(volumeMic * 100);
         });
     }
     
