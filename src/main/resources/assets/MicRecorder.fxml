@@ -49,6 +49,7 @@
                                 <Insets right="10.0" />
                             </GridPane.margin>
                         </Slider>
+                  <Label fx:id="lblVolMic" text="Volume Mic" GridPane.rowIndex="2" />
                     </children>
                 </GridPane>
                 <TextArea fx:id="txtDebug" editable="false" prefHeight="200.0" prefWidth="200.0" text="&#10;" wrapText="true" GridPane.rowIndex="1">
