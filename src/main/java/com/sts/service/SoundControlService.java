@@ -10,6 +10,8 @@ import java.util.ServiceLoader;
 import java.util.logging.Logger;
 import static java.lang.String.format;
 import static java.lang.String.format;
+import static java.lang.String.format;
+import static java.lang.String.format;
 
 /**
  *
@@ -85,7 +87,7 @@ public class SoundControlService {
         }
     }
     
-    public float gettMicVolume(){
+    public float getMicVolume(){
         if (micControl != null) {
             return micControl.getMicVolume();
         }

@@ -106,7 +106,7 @@ public class StsController implements Initializable, SoundControlObserver {
     }
 
     private void initSlider() {
-        float volumeMic = SoundControlService.getInstance().gettMicVolume();
+        float volumeMic = SoundControlService.getInstance().getMicVolume();
         slVolume.setValue(volumeMic * 100);
     }
     
@@ -153,7 +153,7 @@ public class StsController implements Initializable, SoundControlObserver {
             passedTime = now - startTime;
             serie.getData().add(new XYChart.Data<>(passedTime, getVolume()));
 
-            float volumeMic = SoundControlService.getInstance().gettMicVolume();
+            float volumeMic = SoundControlService.getInstance().getMicVolume();
             lblVolMic.setText((volumeMic * 100) + "%");
 
             //Se o tempo passado for maior que o limite superior do eixo X
@@ -217,7 +217,7 @@ public class StsController implements Initializable, SoundControlObserver {
     }
 
     @Override
-    public void volumeNewValue(double volume) {
+    public void voiceSampleAsDouble(double volume) {
         this.volume = volume;
     }
 

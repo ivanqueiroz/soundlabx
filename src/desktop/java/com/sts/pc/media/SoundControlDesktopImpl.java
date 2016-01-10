@@ -22,6 +22,8 @@ import javax.sound.sampled.TargetDataLine;
 import com.sts.media.SoundControl;
 import com.sts.media.SoundControlObserver;
 import com.sts.pc.model.MicrophoneDesktopModel;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -37,7 +39,7 @@ public class SoundControlDesktopImpl implements SoundControl {
     //11025/5 = 2205 samples em 200ms com samplesize de 16bits = 4410
     private static final int BUFFER_LENGTH = 4410;
     private final List<SoundControlObserver> observers = new ArrayList<>();
-    private double volValue;
+    private double voiceSample;
 
     private HashMap<String, Mixer.Info> getMixerInfo() {
         HashMap<String, Mixer.Info> out = new HashMap<>();
@@ -145,16 +147,14 @@ public class SoundControlDesktopImpl implements SoundControl {
 
     @Override
     public void captureAudio() {
-        System.out.println("Chamando captureAudio() da implementacao");
         stopped = false;
 
         if (!AudioSystem.isLineSupported(targetDataLine.getLineInfo())) {
-            System.out.println("Line not supported");
-            System.exit(0);
+            Logger.getLogger(SoundControlDesktopImpl.class.getName()).log(Level.SEVERE, null, "Line not supported");
+            System.exit(1);
 
         }
 
-        System.out.println("Iniciando captura");
         try {
             targetDataLine.open(getAudioFormat());
 
@@ -171,12 +171,12 @@ public class SoundControlDesktopImpl implements SoundControl {
                     numBytesRead = targetDataLine.read(data, 0, data.length);
                     out.write(data, 0, numBytesRead);
                     short[] shortBuffer = byteArrayToShortArray(data);
-                    setVolValue(volProcess(shortBuffer));
+                    setVoiceSample(volProcess(shortBuffer));
                 }
             }
 
         } catch (LineUnavailableException | IOException e) {
-            e.printStackTrace();
+            Logger.getLogger(SoundControlDesktopImpl.class.getName()).log(Level.SEVERE, null, e);
         }
     }
 
@@ -216,8 +216,8 @@ public class SoundControlDesktopImpl implements SoundControl {
         targetDataLine.close();
     }
 
-    public void setVolValue(double volValue) {
-        this.volValue = volValue;
+    public void setVoiceSample(double voiceSample) {
+        this.voiceSample = voiceSample;
         notifyObservers();
     }
 
@@ -233,7 +233,7 @@ public class SoundControlDesktopImpl implements SoundControl {
 
     private void notifyObservers() {
         observers.stream().forEach((observer) -> {
-            observer.volumeNewValue(this.volValue);
+            observer.voiceSampleAsDouble(this.voiceSample);
         });
     }
 
@@ -243,7 +243,7 @@ public class SoundControlDesktopImpl implements SoundControl {
             try {
                 setVolume(value);
             } catch (LineUnavailableException ex) {
-                System.err.println(ex);
+                Logger.getLogger(SoundControlDesktopImpl.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }
@@ -263,7 +263,6 @@ public class SoundControlDesktopImpl implements SoundControl {
             }
         } else if (control instanceof FloatControl) {
             volCtrl = (FloatControl) this.micPort.getControls()[0];
-            System.out.println(volCtrl.getValue());
             volCtrl.setValue((float) volume / 100);
         }
 
@@ -276,7 +275,7 @@ public class SoundControlDesktopImpl implements SoundControl {
         try {
             this.micPort.open();
         } catch (LineUnavailableException ex) {
-            ex.printStackTrace();
+            Logger.getLogger(SoundControlDesktopImpl.class.getName()).log(Level.SEVERE, null, ex);
         }
         final Control control = this.micPort.getControls()[0];
         if (control instanceof CompoundControl) {
