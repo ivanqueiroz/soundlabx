@@ -1,6 +1,5 @@
 package com.sts.controller;
 
-import com.sts.MainApp;
 import com.sts.model.enums.AudioFormatEnum;
 import com.sts.service.SoundControlService;
 import com.sts.model.MicrophoneModel;
@@ -118,8 +117,8 @@ public class StsController implements Initializable, SoundControlObserver {
         //Inicia o eixo X com 0
         xAxis.setLowerBound(0);
         //Inicia o final do eixo X com 10 segundos em nanos
-        xAxis.setUpperBound(TimeUnit.SECONDS.toNanos(10));
-        xAxis.setTickUnit(TimeUnit.SECONDS.toNanos(1));
+        xAxis.setUpperBound(TimeUnit.SECONDS.toNanos(60));
+        xAxis.setTickUnit(TimeUnit.SECONDS.toNanos(5));
         xAxis.setMinorTickCount(1);
         xAxis.setTickLabelFormatter(new StringConverter<Number>() {
             @Override
@@ -127,7 +126,7 @@ public class StsController implements Initializable, SoundControlObserver {
                 return String.format("%02d:%02d",
                         TimeUnit.NANOSECONDS.toMinutes(object.longValue()),
                         TimeUnit.NANOSECONDS.toSeconds(object.longValue())
-                        - TimeUnit.NANOSECONDS.toSeconds(TimeUnit.MILLISECONDS.toMinutes(object.longValue()))
+                        - TimeUnit.MINUTES.toSeconds(TimeUnit.NANOSECONDS.toMinutes(object.longValue()))
                 );
             }
 
@@ -162,9 +161,9 @@ public class StsController implements Initializable, SoundControlObserver {
                 //Remove o dado antigo
                 serie.getData().remove(0);
                 //O limite inferior do eixo X iguala ao superior
-                xAxis.setLowerBound(xAxis.getUpperBound());
+                xAxis.setLowerBound(xAxis.getLowerBound() + TimeUnit.SECONDS.toNanos(1));
                 //O limite superior do eixo X é atualizado para mais 10 segundos.
-                xAxis.setUpperBound(xAxis.getUpperBound() + TimeUnit.SECONDS.toNanos(10));
+                xAxis.setUpperBound(xAxis.getUpperBound() + TimeUnit.SECONDS.toNanos(1));
             }
 
         }

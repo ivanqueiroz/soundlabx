@@ -249,7 +249,7 @@ public class SoundControlDesktopImpl implements SoundControl {
     }
 
     private void setVolume(final float volume) throws LineUnavailableException {
-        FloatControl volCtrl = null;
+        FloatControl volCtrl;
         this.micPort.open();
         final Control control = this.micPort.getControls()[0];
         if (control instanceof CompoundControl) {
@@ -271,7 +271,7 @@ public class SoundControlDesktopImpl implements SoundControl {
     @Override
     public float getMicVolume() {
 
-        FloatControl volCtrl = null;
+        FloatControl volCtrl;
         try {
             this.micPort.open();
         } catch (LineUnavailableException ex) {
