@@ -5,15 +5,18 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
       <group>
-        <file>file:/D:/Documentos/NetBeansProjects/soundlabx/src/main/java/com/micrecorderfx/media/MicControlService.java</file>
-        <file>file:/D:/Documentos/NetBeansProjects/soundlabx/src/desktop/resources/META-INF/services/com.micrecorderfx.media.MicControl</file>
-        <file>file:/D:/Documentos/NetBeansProjects/soundlabx/src/main/resources/com/micrecorderfx/MicRecorder.fxml</file>
-        <file>file:/D:/Documentos/NetBeansProjects/soundlabx/src/main/java/com/micrecorderfx/media/Microphone.java</file>
-        <file>file:/D:/Documentos/NetBeansProjects/soundlabx/src/main/java/com/micrecorderfx/MainApp.java</file>
-        <file>file:/D:/Documentos/NetBeansProjects/soundlabx/src/desktop/java/com/micrecorderfx/dsk/media/MicControlDskImpl.java</file>
-        <file>file:/D:/Documentos/NetBeansProjects/soundlabx/src/main/java/com/micrecorderfx/view/controller/MicRecorderController.java</file>
+        <file>file:/D:/Documentos/NetBeansProjects/STS/src/main/java/com/sts/MainApp.java</file>
+        <file>file:/D:/Documentos/NetBeansProjects/STS/src/main/java/com/sts/controller/StsController.java</file>
+        <file>file:/D:/Documentos/NetBeansProjects/STS/src/desktop/java/com/sts/pc/media/SoundControlDesktopImpl.java</file>
       </group>
     </open-files>
     <editor-bookmarks lastBookmarkId="0" xmlns="http://www.netbeans.org/ns/editor-bookmarks/2"/>
+    <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
+      <group>
+        <file>file:/D:/Documentos/NetBeansProjects/STS/src/main/java/com/sts/MainApp.java</file>
+        <file>file:/D:/Documentos/NetBeansProjects/STS/src/main/java/com/sts/controller/StsController.java</file>
+        <file>file:/D:/Documentos/NetBeansProjects/STS/src/desktop/java/com/sts/pc/media/SoundControlDesktopImpl.java</file>
+      </group>
+    </open-files>
   </auxiliary>
 </gradle-project-properties>
