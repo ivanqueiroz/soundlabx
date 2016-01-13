@@ -38,7 +38,7 @@
                                 <Insets />
                             </GridPane.margin>
                         </Slider>
-                  <Label fx:id="lblVolMic" alignment="CENTER" prefHeight="27.0" prefWidth="51.0" text="0%" textAlignment="CENTER" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                  <Label fx:id="lblVolMic" alignment="CENTER" prefHeight="27.0" prefWidth="77.0" text="0%" textAlignment="CENTER" GridPane.columnIndex="1" GridPane.rowIndex="1">
                      <GridPane.margin>
                         <Insets left="10.0" />
                      </GridPane.margin>

@@ -25,6 +25,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.util.StringConverter;
 import com.sts.media.SoundControlObserver;
+import javafx.beans.value.ChangeListener;
+import javafx.scene.Node;
 
 public class StsController implements Initializable, SoundControlObserver {
 
@@ -58,8 +60,8 @@ public class StsController implements Initializable, SoundControlObserver {
     /*
     * Internal properties
      */
-    // Reference to the main application.
     private final AnimationTimer animation;
+    private final ObservableList<XYChart.Series<Number, Double>> lineChartData;
     private final LineChart.Series<Number, Double> serie;
     private double volume;
     private long startTime;
@@ -68,6 +70,7 @@ public class StsController implements Initializable, SoundControlObserver {
 
     public StsController() {
         animation = new TimelineChartAnimation();
+        lineChartData = FXCollections.observableArrayList();
         serie = new XYChart.Series<>();
     }
 
@@ -81,17 +84,16 @@ public class StsController implements Initializable, SoundControlObserver {
     }
 
     public void initButtons() {
-        
+
         /* Record/Stop Button */
         btnRecordStop.setOnAction(getBtnGravarAction());
-        
+
         /* Upload Button */
         btnUpload.setOnAction(getBtnPararAction());
         btnUpload.setDisable(true);
         btnMicGain.setDisable(true);
-        
-    }
 
+    }
 
     public void initCmbMicrophone() {
         cmbMic.getItems().clear();
@@ -108,16 +110,13 @@ public class StsController implements Initializable, SoundControlObserver {
         float volumeMic = SoundControlService.getInstance().getMicVolume();
         slVolume.setValue(volumeMic * 100);
     }
-    
+
     public void initTimelineChart() {
         //Configura o gráfico
-        ObservableList<XYChart.Series<Number, Double>> lineChartData = FXCollections.observableArrayList();
         serie.getData().add(new XYChart.Data<>(0, 0.0));
+        initLineChart();
+
         xAxis.setForceZeroInRange(false);
-        //Inicia o eixo X com 0
-        xAxis.setLowerBound(0);
-        //Inicia o final do eixo X com 10 segundos em nanos
-        xAxis.setUpperBound(TimeUnit.SECONDS.toNanos(60));
         xAxis.setTickUnit(TimeUnit.SECONDS.toNanos(5));
         xAxis.setMinorTickCount(1);
         xAxis.setTickLabelFormatter(new StringConverter<Number>() {
@@ -143,6 +142,7 @@ public class StsController implements Initializable, SoundControlObserver {
         voiceChart.setCache(true);
         voiceChart.setCacheShape(true);
         voiceChart.setCacheHint(CacheHint.SPEED);
+
     }
 
     private class TimelineChartAnimation extends AnimationTimer {
@@ -150,9 +150,16 @@ public class StsController implements Initializable, SoundControlObserver {
         @Override
         public void handle(long now) {
             passedTime = now - startTime;
-            serie.getData().add(new XYChart.Data<>(passedTime, getVolume()));
+            XYChart.Data<Number, Double> data = new XYChart.Data<>(passedTime, getVolume());
+            data.nodeProperty().addListener((ObservableValue<? extends Node> observable, Node oldValue, Node newValue) -> {
+                if (newValue != null) {
+                    setNodeStyle(data);
+                }
+            });
+            serie.getData().add(data);
 
             float volumeMic = SoundControlService.getInstance().getMicVolume();
+
             lblVolMic.setText((volumeMic * 100) + "%");
 
             //Se o tempo passado for maior que o limite superior do eixo X
@@ -168,6 +175,17 @@ public class StsController implements Initializable, SoundControlObserver {
 
         }
 
+    }
+
+    private void setNodeStyle(XYChart.Data<Number, Double> data) {
+        Node node = data.getNode();
+        if (data.getYValue().intValue() > 8) {
+            node.setStyle(".default-color0.chart-series-line { -fx-stroke: #e9967a; }");
+        } else if (data.getYValue().intValue() > 5) {
+            node.setStyle(".default-color1.chart-series-line { -fx-stroke: #f0e68c; }");
+        } else {
+            node.setStyle(".default-color2.chart-series-line { -fx-stroke: #dda0dd; }");
+        }
     }
 
     private EventHandler<ActionEvent> getBtnPararAction() {
@@ -189,6 +207,7 @@ public class StsController implements Initializable, SoundControlObserver {
 
     private void startRecord() {
         btnRecordStop.setText("Stop");
+        initLineChart();
         startTime = System.nanoTime();
         btnUpload.setDisable(true);
         btnMicGain.setDisable(true);
@@ -205,6 +224,15 @@ public class StsController implements Initializable, SoundControlObserver {
         Thread t = new Thread(captureAudioTask);
         t.setDaemon(true);
         t.start();
+    }
+
+    private void initLineChart() {
+        serie.getData().clear();
+        serie.getData().add(new XYChart.Data<>(0, 0.0));
+        //Inicia o eixo X com 0
+        xAxis.setLowerBound(0);
+        //Inicia o final do eixo X com 10 segundos em nanos
+        xAxis.setUpperBound(TimeUnit.SECONDS.toNanos(60));
     }
 
     private void stopRecord() {
