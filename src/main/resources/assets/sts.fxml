@@ -12,7 +12,7 @@
 
 <BorderPane cache="true" cacheHint="SPEED" prefHeight="433.0" prefWidth="564.0" xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.sts.controller.StsController">
     <center>
-        <GridPane prefHeight="433.0" prefWidth="784.0" BorderPane.alignment="CENTER">
+        <GridPane fx:id="grdPanePrincipal" prefHeight="433.0" prefWidth="784.0" BorderPane.alignment="CENTER">
             <columnConstraints>
                 <ColumnConstraints hgrow="SOMETIMES" maxWidth="408.0" minWidth="0.0" prefWidth="0.0" />
                 <ColumnConstraints hgrow="SOMETIMES" maxWidth="930.0" minWidth="10.0" prefWidth="930.0" />
@@ -74,14 +74,6 @@
                   <Insets left="10.0" right="10.0" />
                </padding>
                 </GridPane>
-                <LineChart fx:id="voiceChart" animated="false" cache="true" cacheHint="SPEED" cacheShape="true" createSymbols="false" legendVisible="false" prefHeight="288.0" prefWidth="475.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
-                    <xAxis>
-                        <NumberAxis autoRanging="false" cache="true" cacheHint="SPEED" forceZeroInRange="false" label="Time" fx:id="xAxis" />
-                    </xAxis>
-                    <yAxis>
-                        <NumberAxis autoRanging="false" cache="true" cacheHint="SPEED" label="Volume" lowerBound="0" tickUnit="5" upperBound="100" />
-                    </yAxis>
-                </LineChart>
             </children>
         </GridPane>
     </center>

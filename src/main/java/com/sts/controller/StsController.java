@@ -25,8 +25,13 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.util.StringConverter;
 import com.sts.media.SoundControlObserver;
-import javafx.beans.value.ChangeListener;
+import info.monitorenter.gui.chart.Chart2D;
+import info.monitorenter.gui.chart.ITrace2D;
+import info.monitorenter.gui.chart.traces.Trace2DSimple;
+import javafx.embed.swing.SwingNode;
 import javafx.scene.Node;
+import javafx.scene.layout.GridPane;
+import javax.swing.SwingUtilities;
 
 public class StsController implements Initializable, SoundControlObserver {
 
@@ -46,16 +51,13 @@ public class StsController implements Initializable, SoundControlObserver {
     private Button btnMicGain;
 
     @FXML
-    private LineChart<Number, Double> voiceChart;
-
-    @FXML
     private Slider slVolume;
 
     @FXML
-    private NumberAxis xAxis;
-
-    @FXML
     private Label lblVolMic;
+    
+    @FXML
+    private GridPane grdPanePrincipal;
 
     /*
     * Internal properties
@@ -67,11 +69,13 @@ public class StsController implements Initializable, SoundControlObserver {
     private long startTime;
     private long passedTime;
     private boolean isRecording = false;
+    private ITrace2D chartTrace;
 
     public StsController() {
         animation = new TimelineChartAnimation();
         lineChartData = FXCollections.observableArrayList();
         serie = new XYChart.Series<>();
+        chartTrace = new Trace2DSimple();
     }
 
     @Override
@@ -110,39 +114,55 @@ public class StsController implements Initializable, SoundControlObserver {
         float volumeMic = SoundControlService.getInstance().getMicVolume();
         slVolume.setValue(volumeMic * 100);
     }
+    
+    private Chart2D initJChart(){
+        Chart2D chart = new Chart2D();
+        chart.addTrace(chartTrace);
+        return chart;
+        
+    }
 
     public void initTimelineChart() {
         //Configura o gráfico
         serie.getData().add(new XYChart.Data<>(0, 0.0));
         initLineChart();
 
-        xAxis.setForceZeroInRange(false);
-        xAxis.setTickUnit(TimeUnit.SECONDS.toNanos(5));
-        xAxis.setMinorTickCount(1);
-        xAxis.setTickLabelFormatter(new StringConverter<Number>() {
-            @Override
-            public String toString(Number object) {
-                return String.format("%02d:%02d",
-                        TimeUnit.NANOSECONDS.toMinutes(object.longValue()),
-                        TimeUnit.NANOSECONDS.toSeconds(object.longValue())
-                        - TimeUnit.MINUTES.toSeconds(TimeUnit.NANOSECONDS.toMinutes(object.longValue()))
-                );
-            }
+//        xAxis.setForceZeroInRange(false);
+//        xAxis.setTickUnit(TimeUnit.SECONDS.toNanos(5));
+//        xAxis.setMinorTickCount(1);
+//        xAxis.setTickLabelFormatter(new StringConverter<Number>() {
+//            @Override
+//            public String toString(Number object) {
+//                return String.format("%02d:%02d",
+//                        TimeUnit.NANOSECONDS.toMinutes(object.longValue()),
+//                        TimeUnit.NANOSECONDS.toSeconds(object.longValue())
+//                        - TimeUnit.MINUTES.toSeconds(TimeUnit.NANOSECONDS.toMinutes(object.longValue()))
+//                );
+//            }
+//
+//            @Override
+//            public Number fromString(String string) {
+//                throw new UnsupportedOperationException("Not supported yet.");
+//            }
+//        });
+//
+//        lineChartData.add(serie);
+//        voiceChart.setData(lineChartData);
+//        voiceChart.createSymbolsProperty();
+//        voiceChart.setAnimated(false);
+//        voiceChart.setCache(true);
+//        voiceChart.setCacheShape(true);
+//        voiceChart.setCacheHint(CacheHint.SPEED);
+        SwingNode node = new SwingNode();
+        createSwingContent(node,initJChart());
+        grdPanePrincipal.add(node,1,1);
 
-            @Override
-            public Number fromString(String string) {
-                throw new UnsupportedOperationException("Not supported yet.");
-            }
+    }
+    
+    private void createSwingContent(final SwingNode swingNode, Chart2D chart){
+        SwingUtilities.invokeLater(() -> {
+            swingNode.setContent(chart);
         });
-
-        lineChartData.add(serie);
-        voiceChart.setData(lineChartData);
-        voiceChart.createSymbolsProperty();
-        voiceChart.setAnimated(false);
-        voiceChart.setCache(true);
-        voiceChart.setCacheShape(true);
-        voiceChart.setCacheHint(CacheHint.SPEED);
-
     }
 
     private class TimelineChartAnimation extends AnimationTimer {
@@ -150,6 +170,7 @@ public class StsController implements Initializable, SoundControlObserver {
         @Override
         public void handle(long now) {
             passedTime = now - startTime;
+            chartTrace.addPoint(passedTime, getVolume());
             XYChart.Data<Number, Double> data = new XYChart.Data<>(passedTime, getVolume());
             data.nodeProperty().addListener((ObservableValue<? extends Node> observable, Node oldValue, Node newValue) -> {
                 if (newValue != null) {
@@ -163,15 +184,15 @@ public class StsController implements Initializable, SoundControlObserver {
             lblVolMic.setText((volumeMic * 100) + "%");
 
             //Se o tempo passado for maior que o limite superior do eixo X
-            if (passedTime > xAxis.getUpperBound()) {
-
-                //Remove o dado antigo
-                serie.getData().remove(0);
-                //O limite inferior do eixo X iguala ao superior
-                xAxis.setLowerBound(xAxis.getLowerBound() + TimeUnit.SECONDS.toNanos(1));
-                //O limite superior do eixo X é atualizado para mais 10 segundos.
-                xAxis.setUpperBound(xAxis.getUpperBound() + TimeUnit.SECONDS.toNanos(1));
-            }
+//            if (passedTime > xAxis.getUpperBound()) {
+//
+//                //Remove o dado antigo
+//                serie.getData().remove(0);
+//                //O limite inferior do eixo X iguala ao superior
+//                xAxis.setLowerBound(xAxis.getLowerBound() + TimeUnit.SECONDS.toNanos(1));
+//                //O limite superior do eixo X é atualizado para mais 10 segundos.
+//                xAxis.setUpperBound(xAxis.getUpperBound() + TimeUnit.SECONDS.toNanos(1));
+//            }
 
         }
 
@@ -229,10 +250,10 @@ public class StsController implements Initializable, SoundControlObserver {
     private void initLineChart() {
         serie.getData().clear();
         serie.getData().add(new XYChart.Data<>(0, 0.0));
-        //Inicia o eixo X com 0
-        xAxis.setLowerBound(0);
-        //Inicia o final do eixo X com 10 segundos em nanos
-        xAxis.setUpperBound(TimeUnit.SECONDS.toNanos(60));
+//        //Inicia o eixo X com 0
+//        xAxis.setLowerBound(0);
+//        //Inicia o final do eixo X com 10 segundos em nanos
+//        xAxis.setUpperBound(TimeUnit.SECONDS.toNanos(60));
     }
 
     private void stopRecord() {
