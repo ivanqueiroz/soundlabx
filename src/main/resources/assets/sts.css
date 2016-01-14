@@ -3,5 +3,7 @@
  */
 
 .mainFxmlClass {
+    
+    -fx-background-color: rgba(0,168,355,0.05);-fx-background-radius: 10;
 
 }

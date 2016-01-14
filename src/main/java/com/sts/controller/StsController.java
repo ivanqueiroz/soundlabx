@@ -25,8 +25,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.util.StringConverter;
 import com.sts.media.SoundControlObserver;
-import javafx.beans.value.ChangeListener;
 import javafx.scene.Node;
+import javafx.scene.layout.GridPane;
 
 public class StsController implements Initializable, SoundControlObserver {
 
@@ -46,13 +46,13 @@ public class StsController implements Initializable, SoundControlObserver {
     private Button btnMicGain;
 
     @FXML
-    private LineChart<Number, Double> voiceChart;
-
-    @FXML
     private Slider slVolume;
-
+    
     @FXML
-    private NumberAxis xAxis;
+    private GridPane grdPaneChart;
+    
+    private final NumberAxis xAxis;
+    private final NumberAxis yAxis;
 
     @FXML
     private Label lblVolMic;
@@ -67,13 +67,18 @@ public class StsController implements Initializable, SoundControlObserver {
     private long startTime;
     private long passedTime;
     private boolean isRecording = false;
+    private final LineChart<Number, Double> voiceChart;
 
     public StsController() {
         animation = new TimelineChartAnimation();
         lineChartData = FXCollections.observableArrayList();
         serie = new XYChart.Series<>();
+        yAxis = new NumberAxis();
+        xAxis = new NumberAxis();
+        voiceChart = new LineChart(xAxis, yAxis);
     }
 
+    
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         SoundControlService.getInstance().addObserver(this);
@@ -116,6 +121,10 @@ public class StsController implements Initializable, SoundControlObserver {
         serie.getData().add(new XYChart.Data<>(0, 0.0));
         initLineChart();
 
+        xAxis.setAutoRanging(false);
+        xAxis.setCache(true);
+        xAxis.setCacheHint(CacheHint.SPEED);
+        xAxis.setLabel("Time");
         xAxis.setForceZeroInRange(false);
         xAxis.setTickUnit(TimeUnit.SECONDS.toNanos(5));
         xAxis.setMinorTickCount(1);
@@ -135,6 +144,14 @@ public class StsController implements Initializable, SoundControlObserver {
             }
         });
 
+        yAxis.setAutoRanging(false);
+        yAxis.setCache(true);
+        yAxis.setCacheHint(CacheHint.SPEED);
+        yAxis.setLabel("Label");
+        yAxis.setLowerBound(0);
+        yAxis.setTickUnit(5);
+        yAxis.setUpperBound(100);
+        
         lineChartData.add(serie);
         voiceChart.setData(lineChartData);
         voiceChart.createSymbolsProperty();
@@ -142,6 +159,10 @@ public class StsController implements Initializable, SoundControlObserver {
         voiceChart.setCache(true);
         voiceChart.setCacheShape(true);
         voiceChart.setCacheHint(CacheHint.SPEED);
+        voiceChart.setCreateSymbols(false);
+        voiceChart.setLegendVisible(false);
+
+        grdPaneChart.add(voiceChart, 1, 1);
 
     }
 
@@ -156,6 +177,7 @@ public class StsController implements Initializable, SoundControlObserver {
                     setNodeStyle(data);
                 }
             });
+
             serie.getData().add(data);
 
             float volumeMic = SoundControlService.getInstance().getMicVolume();
