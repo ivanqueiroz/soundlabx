@@ -63,7 +63,7 @@ public class StsController implements Initializable, SoundControlObserver {
     private final AnimationTimer animation;
     private final ObservableList<XYChart.Series<Number, Double>> lineChartData;
     private final LineChart.Series<Number, Double> serie;
-    private double volume;
+    private double sample;
     private long startTime;
     private long passedTime;
     private boolean isRecording = false;
@@ -171,7 +171,7 @@ public class StsController implements Initializable, SoundControlObserver {
         @Override
         public void handle(long now) {
             passedTime = now - startTime;
-            XYChart.Data<Number, Double> data = new XYChart.Data<>(passedTime, getVolume());
+            XYChart.Data<Number, Double> data = new XYChart.Data<>(passedTime, getSample());
             data.nodeProperty().addListener((ObservableValue<? extends Node> observable, Node oldValue, Node newValue) -> {
                 if (newValue != null) {
                     setNodeStyle(data);
@@ -266,12 +266,12 @@ public class StsController implements Initializable, SoundControlObserver {
     }
 
     @Override
-    public void voiceSampleAsDouble(double volume) {
-        this.volume = volume;
+    public void voiceSampleAsDouble(double sample) {
+        this.sample = sample;
     }
 
-    private double getVolume() {
-        return this.volume;
+    private double getSample() {
+        return this.sample;
     }
 
     public void play() {

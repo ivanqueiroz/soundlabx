@@ -40,6 +40,7 @@ public class SoundControlDesktopImpl implements SoundControl {
     private static final int BUFFER_LENGTH = 4410;
     private final List<SoundControlObserver> observers = new ArrayList<>();
     private double voiceSample;
+    private static final Logger LOG = Logger.getLogger(SoundControlDesktopImpl.class.getName());
 
     private HashMap<String, Mixer.Info> getMixerInfo() {
         HashMap<String, Mixer.Info> out = new HashMap<>();
@@ -69,7 +70,7 @@ public class SoundControlDesktopImpl implements SoundControl {
                 try {
                     portMic = (Port) mixer.getLine(Port.Info.MICROPHONE);
                 } catch (LineUnavailableException ex) {
-                    ex.printStackTrace();
+                    LOG.log(Level.SEVERE, "ERROR WHEN GET MIC PORT", ex);
                 }
 
             }

@@ -9,9 +9,6 @@ import java.util.List;
 import java.util.ServiceLoader;
 import java.util.logging.Logger;
 import static java.lang.String.format;
-import static java.lang.String.format;
-import static java.lang.String.format;
-import static java.lang.String.format;
 
 /**
  *
