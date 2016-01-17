@@ -1,6 +1,9 @@
 package com.sts.pc.media;
 
+import com.sts.media.SoundControl;
+import com.sts.media.SoundControlObserver;
 import com.sts.model.MicrophoneModel;
+import com.sts.pc.model.MicrophoneDesktopModel;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -8,6 +11,8 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.CompoundControl;
@@ -19,11 +24,6 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.Mixer;
 import javax.sound.sampled.Port;
 import javax.sound.sampled.TargetDataLine;
-import com.sts.media.SoundControl;
-import com.sts.media.SoundControlObserver;
-import com.sts.pc.model.MicrophoneDesktopModel;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -52,7 +52,6 @@ public class SoundControlDesktopImpl implements SoundControl {
     }
 
     private Port getMicPort(String strMixerName) {
-        System.out.println("getMicPort");
         Port portMic = null;
         StringBuilder chave = new StringBuilder("Port ");
         chave.append(strMixerName);
@@ -95,7 +94,7 @@ public class SoundControlDesktopImpl implements SoundControl {
                 micLine = (TargetDataLine) AudioSystem.getLine(info);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+           LOG.log(Level.SEVERE, "ERROR WHEN GET TARGET DATA LINE", e);
         }
 
         return micLine;
@@ -125,7 +124,6 @@ public class SoundControlDesktopImpl implements SoundControl {
     public void setSelectedMic(MicrophoneModel selectedMic) {
         System.out.println("Chamou setSelectedMic() ");
         if (selectedMic != null) {
-            System.out.println("Chamou setSelectedMic() " + selectedMic.getName());
             final Mixer.Info info = getMixerInfo().get(selectedMic.getName());
             System.out.println("Info: " + info.getName());
             this.targetDataLine = getTargetDataLine(info.getName());
@@ -151,7 +149,7 @@ public class SoundControlDesktopImpl implements SoundControl {
         stopped = false;
 
         if (!AudioSystem.isLineSupported(targetDataLine.getLineInfo())) {
-            Logger.getLogger(SoundControlDesktopImpl.class.getName()).log(Level.SEVERE, null, "Line not supported");
+            LOG.log(Level.SEVERE, "LINE NOT SUPPORTED");
             System.exit(1);
 
         }
@@ -177,7 +175,7 @@ public class SoundControlDesktopImpl implements SoundControl {
             }
 
         } catch (LineUnavailableException | IOException e) {
-            Logger.getLogger(SoundControlDesktopImpl.class.getName()).log(Level.SEVERE, null, e);
+           LOG.log(Level.SEVERE, "ERROR WHEN CAPTURE AUDIO", e);
         }
     }
 
