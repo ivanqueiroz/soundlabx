@@ -3,15 +3,12 @@ package com.sts.service;
 import com.sts.media.SoundControl;
 import com.sts.media.SoundControlObserver;
 import com.sts.model.MicrophoneModel;
+import static java.lang.String.format;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ServiceLoader;
 import java.util.logging.Logger;
-import static java.lang.String.format;
-import static java.lang.String.format;
-import static java.lang.String.format;
-import static java.lang.String.format;
 
 /**
  *
@@ -19,7 +16,7 @@ import static java.lang.String.format;
  */
 public class SoundControlService {
     
-    private static SoundControlService instance;
+    private static SoundControlService INSTANCE;
     
     private final ServiceLoader<SoundControl> serviceLoader;
     
@@ -34,22 +31,22 @@ public class SoundControlService {
         while (iterator.hasNext()) {
             if (micControl == null) {
                 micControl = iterator.next();
-                LOG.info(format("Using MicControl: %s", micControl.getClass().getName()));
+                LOG.info(format("USING MICCONTROL: %s", micControl.getClass().getName()));
             } else {
-                LOG.info(format("This MicControl is ignored: %s", iterator.next().getClass().getName()));
+                LOG.info(format("THIS MICCONTROL IS IGNORED: %s", iterator.next().getClass().getName()));
             }
         }
         
         if (micControl == null) {
-            LOG.severe("No MicControl implementation could be found!");
+            LOG.severe("NO MICCONTROL IMPLEMENTATION COULD BE FOUND!");
         }
     }
     
     public static synchronized SoundControlService getInstance() {
-        if (instance == null) {
-            instance = new SoundControlService();
+        if (INSTANCE == null) {
+            INSTANCE = new SoundControlService();
         }
-        return instance;
+        return INSTANCE;
     }
     
     public List<MicrophoneModel> listAllMics() {
@@ -64,7 +61,6 @@ public class SoundControlService {
 
     public void captureAudio(){
         if (micControl != null) {
-            System.out.println("Chamado captureAudio na interface");
             micControl.captureAudio();
         }
     }

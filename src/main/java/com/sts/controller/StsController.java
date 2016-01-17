@@ -1,9 +1,13 @@
 package com.sts.controller;
 
-import com.sts.model.enums.AudioFormatEnum;
-import com.sts.service.SoundControlService;
+import com.sts.media.SoundControlObserver;
 import com.sts.model.MicrophoneModel;
+import com.sts.model.enums.AudioFormatEnum;
+import com.sts.service.HttpService;
+import com.sts.service.SoundControlService;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.TimeUnit;
 import javafx.animation.AnimationTimer;
@@ -23,16 +27,11 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
-import javafx.util.StringConverter;
-import com.sts.media.SoundControlObserver;
-import javafx.scene.Node;
 import javafx.scene.layout.GridPane;
+import javafx.util.StringConverter;
 
 public class StsController implements Initializable, SoundControlObserver {
 
-    /**
-     * FXML Components
-     */
     @FXML
     private ComboBox cmbMic;
 
@@ -47,27 +46,24 @@ public class StsController implements Initializable, SoundControlObserver {
 
     @FXML
     private Slider slVolume;
-    
+
     @FXML
     private GridPane grdPaneChart;
-    
-    private final NumberAxis xAxis;
-    private final NumberAxis yAxis;
 
     @FXML
     private Label lblVolMic;
 
-    /*
-    * Internal properties
-     */
     private final AnimationTimer animation;
-    private final ObservableList<XYChart.Series<Number, Double>> lineChartData;
-    private final LineChart.Series<Number, Double> serie;
-    private double volume;
-    private long startTime;
-    private long passedTime;
+    private List<Double> exercise;
     private boolean isRecording = false;
+    private final ObservableList<XYChart.Series<Number, Double>> lineChartData;
+    private long passedTime;
+    private double sample;
+    private final LineChart.Series<Number, Double> serie;
+    private long startTime;
     private final LineChart<Number, Double> voiceChart;
+    private final NumberAxis xAxis;
+    private final NumberAxis yAxis;
 
     public StsController() {
         animation = new TimelineChartAnimation();
@@ -78,7 +74,6 @@ public class StsController implements Initializable, SoundControlObserver {
         voiceChart = new LineChart(xAxis, yAxis);
     }
 
-    
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         SoundControlService.getInstance().addObserver(this);
@@ -89,15 +84,10 @@ public class StsController implements Initializable, SoundControlObserver {
     }
 
     public void initButtons() {
-
-        /* Record/Stop Button */
-        btnRecordStop.setOnAction(getBtnGravarAction());
-
-        /* Upload Button */
-        btnUpload.setOnAction(getBtnPararAction());
+        btnRecordStop.setOnAction(createBtnRecordAction());
+        btnUpload.setOnAction(createBtnUploadAction());
         btnUpload.setDisable(true);
         btnMicGain.setDisable(true);
-
     }
 
     public void initCmbMicrophone() {
@@ -117,10 +107,37 @@ public class StsController implements Initializable, SoundControlObserver {
     }
 
     public void initTimelineChart() {
-        //Configura o gráfico
-        serie.getData().add(new XYChart.Data<>(0, 0.0));
-        initLineChart();
+        resetVoiceChartData();
+        configureXAxis();
+        configureYAxis();
+        configureAndAddVoiceChart();
 
+    }
+
+    private void configureAndAddVoiceChart() {
+        lineChartData.add(serie);
+        voiceChart.setData(lineChartData);
+        voiceChart.createSymbolsProperty();
+        voiceChart.setAnimated(false);
+        voiceChart.setCache(true);
+        voiceChart.setCacheShape(true);
+        voiceChart.setCacheHint(CacheHint.SPEED);
+        voiceChart.setCreateSymbols(false);
+        voiceChart.setLegendVisible(false);
+        grdPaneChart.add(voiceChart, 1, 1);
+    }
+
+    private void configureYAxis() {
+        yAxis.setAutoRanging(false);
+        yAxis.setCache(true);
+        yAxis.setCacheHint(CacheHint.SPEED);
+        yAxis.setLabel("Label");
+        yAxis.setLowerBound(0);
+        yAxis.setTickUnit(5);
+        yAxis.setUpperBound(100);
+    }
+
+    private void configureXAxis() {
         xAxis.setAutoRanging(false);
         xAxis.setCache(true);
         xAxis.setCacheHint(CacheHint.SPEED);
@@ -143,27 +160,6 @@ public class StsController implements Initializable, SoundControlObserver {
                 throw new UnsupportedOperationException("Not supported yet.");
             }
         });
-
-        yAxis.setAutoRanging(false);
-        yAxis.setCache(true);
-        yAxis.setCacheHint(CacheHint.SPEED);
-        yAxis.setLabel("Label");
-        yAxis.setLowerBound(0);
-        yAxis.setTickUnit(5);
-        yAxis.setUpperBound(100);
-        
-        lineChartData.add(serie);
-        voiceChart.setData(lineChartData);
-        voiceChart.createSymbolsProperty();
-        voiceChart.setAnimated(false);
-        voiceChart.setCache(true);
-        voiceChart.setCacheShape(true);
-        voiceChart.setCacheHint(CacheHint.SPEED);
-        voiceChart.setCreateSymbols(false);
-        voiceChart.setLegendVisible(false);
-
-        grdPaneChart.add(voiceChart, 1, 1);
-
     }
 
     private class TimelineChartAnimation extends AnimationTimer {
@@ -171,22 +167,13 @@ public class StsController implements Initializable, SoundControlObserver {
         @Override
         public void handle(long now) {
             passedTime = now - startTime;
-            XYChart.Data<Number, Double> data = new XYChart.Data<>(passedTime, getVolume());
-            data.nodeProperty().addListener((ObservableValue<? extends Node> observable, Node oldValue, Node newValue) -> {
-                if (newValue != null) {
-                    setNodeStyle(data);
-                }
-            });
-
+            final double sample = getSample();
+            exercise.add(sample);
+            XYChart.Data<Number, Double> data = new XYChart.Data<>(passedTime, sample);
             serie.getData().add(data);
-
             float volumeMic = SoundControlService.getInstance().getMicVolume();
-
             lblVolMic.setText((volumeMic * 100) + "%");
-
-            //Se o tempo passado for maior que o limite superior do eixo X
             if (passedTime > xAxis.getUpperBound()) {
-
                 //Remove o dado antigo
                 serie.getData().remove(0);
                 //O limite inferior do eixo X iguala ao superior
@@ -199,24 +186,23 @@ public class StsController implements Initializable, SoundControlObserver {
 
     }
 
-    private void setNodeStyle(XYChart.Data<Number, Double> data) {
-        Node node = data.getNode();
-        if (data.getYValue().intValue() > 8) {
-            node.setStyle(".default-color0.chart-series-line { -fx-stroke: #e9967a; }");
-        } else if (data.getYValue().intValue() > 5) {
-            node.setStyle(".default-color1.chart-series-line { -fx-stroke: #f0e68c; }");
-        } else {
-            node.setStyle(".default-color2.chart-series-line { -fx-stroke: #dda0dd; }");
-        }
-    }
-
-    private EventHandler<ActionEvent> getBtnPararAction() {
+    private EventHandler<ActionEvent> createBtnUploadAction() {
         return (ActionEvent e) -> {
-            stopRecord();
+            System.out.println("CHAMOU");
+            double[] exerciseDoubleArray = new double[exercise.size()];
+            for (int i = 0; i < exerciseDoubleArray.length; i++) {
+                exerciseDoubleArray[i] = exercise.get(i);
+            }
+            Thread thread = new Thread(() -> {
+                System.out.println("CHAMOU2");
+                HttpService.getInstance().sendExercise(exerciseDoubleArray);
+            });
+            
+            thread.start();
         };
     }
 
-    private EventHandler<ActionEvent> getBtnGravarAction() {
+    private EventHandler<ActionEvent> createBtnRecordAction() {
         return (ActionEvent e) -> {
             isRecording = btnRecordStop.getText().equalsIgnoreCase("Record");
             if (isRecording) {
@@ -228,11 +214,27 @@ public class StsController implements Initializable, SoundControlObserver {
     }
 
     private void startRecord() {
+        resetVoiceChartData();
+        configureButtonsToStartRecord();
+        initAndStartVoiceChartAnimation();
+    }
+
+    private void resetVoiceChartData() {
+        exercise = new ArrayList<>();
+        serie.getData().clear();
+        serie.getData().add(new XYChart.Data<>(0, 0.0));
+        xAxis.setLowerBound(0);
+        xAxis.setUpperBound(TimeUnit.SECONDS.toNanos(60));
+    }
+
+    private void configureButtonsToStartRecord() {
         btnRecordStop.setText("Stop");
-        initLineChart();
-        startTime = System.nanoTime();
         btnUpload.setDisable(true);
         btnMicGain.setDisable(true);
+    }
+
+    private void initAndStartVoiceChartAnimation() {
+        startTime = System.nanoTime();
         animation.start();
         Task<Void> captureAudioTask = new Task<Void>() {
 
@@ -248,38 +250,28 @@ public class StsController implements Initializable, SoundControlObserver {
         t.start();
     }
 
-    private void initLineChart() {
-        serie.getData().clear();
-        serie.getData().add(new XYChart.Data<>(0, 0.0));
-        //Inicia o eixo X com 0
-        xAxis.setLowerBound(0);
-        //Inicia o final do eixo X com 10 segundos em nanos
-        xAxis.setUpperBound(TimeUnit.SECONDS.toNanos(60));
+    private void stopRecord() {
+        configureButtonsToStopRecord();
+        initAndStopVoiceChartAnimation();
     }
 
-    private void stopRecord() {
+    private void configureButtonsToStopRecord() {
         btnRecordStop.setText("Record");
         btnUpload.setDisable(false);
         btnMicGain.setDisable(false);
+    }
+
+    private void initAndStopVoiceChartAnimation() {
         animation.stop();
         SoundControlService.getInstance().stopCapture();
     }
 
     @Override
-    public void voiceSampleAsDouble(double volume) {
-        this.volume = volume;
+    public void voiceSampleAsDouble(double sample) {
+        this.sample = sample;
     }
 
-    private double getVolume() {
-        return this.volume;
+    private double getSample() {
+        return this.sample;
     }
-
-    public void play() {
-        animation.start();
-    }
-
-    public void stop() {
-        animation.stop();
-    }
-
 }

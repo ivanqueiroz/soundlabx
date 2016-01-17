@@ -11,6 +11,11 @@ apply plugin: 'org.javafxports.jfxmobile'
 
 repositories {
     jcenter()
+    
+    dependencies {
+        compile 'com.eclipsesource.minimal-json:minimal-json:0.9.4'
+        compile 'org.apache.httpcomponents:httpclient:4.5.1'
+    }
 }
 
 dependencies {
