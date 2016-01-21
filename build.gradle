@@ -18,12 +18,16 @@ repositories {
     }
 }
 
+dependencies {
+    compile files('lib/jchart2d-3.2.2.jar')
+}
+
 mainClassName = 'com.sts.MainApp'
 
 jfxmobile {
     android {
         manifest = 'src/android/AndroidManifest.xml'
-        androidSdk = 'D:/Programas/adroid-sdk'
+        androidSdk = '/Users/ivanqueiroz/Library/Android/sdk'
     }
     ios {
         infoPList = file('src/ios/Default-Info.plist')
