@@ -37,7 +37,7 @@ public class SoundControlDesktopImpl implements SoundControl {
     private Port micPort = null;
 
     //11025/5 = 2205 samples em 200ms com samplesize de 16bits = 4410
-    private static final int BUFFER_LENGTH = 4410;
+    private static final int BUFFER_LENGTH = 8820;
     private final List<SoundControlObserver> observers = new ArrayList<>();
     private double voiceSample;
     private static final Logger LOG = Logger.getLogger(SoundControlDesktopImpl.class.getName());

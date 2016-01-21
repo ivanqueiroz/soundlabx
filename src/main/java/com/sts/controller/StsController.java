@@ -164,25 +164,29 @@ public class StsController implements Initializable, SoundControlObserver {
 
     private class TimelineChartAnimation extends AnimationTimer {
 
+        double sampleAux = 0;
+
         @Override
         public void handle(long now) {
             passedTime = now - startTime;
             final double sample = getSample();
-            System.out.println(sample);
-            exercise.add(sample);
-            XYChart.Data<Number, Double> data = new XYChart.Data<>(passedTime, sample);
-            serie.getData().add(data);
-            float volumeMic = SoundControlService.getInstance().getMicVolume();
-            lblVolMic.setText((volumeMic * 100) + "%");
-            if (passedTime > xAxis.getUpperBound()) {
-                //Remove o dado antigo
-                serie.getData().remove(0);
-                //O limite inferior do eixo X iguala ao superior
-                xAxis.setLowerBound(xAxis.getLowerBound() + TimeUnit.SECONDS.toNanos(1));
-                //O limite superior do eixo X é atualizado para mais 10 segundos.
-                xAxis.setUpperBound(xAxis.getUpperBound() + TimeUnit.SECONDS.toNanos(1));
+            if (sampleAux != sample) {
+                sampleAux = sample;
+                System.out.println(sample);
+                exercise.add(sample);
+                XYChart.Data<Number, Double> data = new XYChart.Data<>(passedTime, sample);
+                serie.getData().add(data);
+                float volumeMic = SoundControlService.getInstance().getMicVolume();
+                lblVolMic.setText((volumeMic * 100) + "%");
+                if (passedTime > xAxis.getUpperBound()) {
+                    //Remove o dado antigo
+                    serie.getData().remove(0);
+                    //O limite inferior do eixo X iguala ao superior
+                    xAxis.setLowerBound(xAxis.getLowerBound() + TimeUnit.SECONDS.toNanos(1));
+                    //O limite superior do eixo X é atualizado para mais 10 segundos.
+                    xAxis.setUpperBound(xAxis.getUpperBound() + TimeUnit.SECONDS.toNanos(1));
+                }
             }
-
         }
 
     }
@@ -196,7 +200,7 @@ public class StsController implements Initializable, SoundControlObserver {
             Thread thread = new Thread(() -> {
                 HttpService.getInstance().sendExercise(exerciseDoubleArray, passedTime);
             });
-            
+
             thread.start();
         };
     }
