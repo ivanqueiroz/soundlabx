@@ -1,7 +1,5 @@
 package com.sts.pc.net;
 
-import com.eclipsesource.json.Json;
-import com.eclipsesource.json.JsonArray;
 import com.sts.net.HttpControl;
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,14 +27,13 @@ public class HttpControlDesktopImpl implements HttpControl {
     }
 
     @Override
-    public void sendExercise(double[] exercise) {
+    public void sendExercise(double[] exercise, long duration) {
         try {
             HttpPost httppost = new HttpPost(URL_SERVER);
-            List<NameValuePair> params = new ArrayList<>(1);
-            JsonArray exerciseJson = Json.array(exercise);
-            final String exerciseJsonString = exerciseJson.toString();
-            LOG.log(Level.CONFIG, "JSON EXERCISE: {0}", exerciseJsonString);
-            params.add(new BasicNameValuePair("exercise", exerciseJsonString));
+            List<NameValuePair> params = new ArrayList<>(2);
+            params.add(new BasicNameValuePair("exercise", getExerciseAsString(exercise)));
+            params.add(new BasicNameValuePair("duration", String.valueOf(duration)));
+            
             httppost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
 
             HttpResponse response = httpClient.execute(httppost);
@@ -45,7 +42,6 @@ public class HttpControlDesktopImpl implements HttpControl {
             if (entity != null) {
                 InputStream instream = entity.getContent();
                 try {
-                    LOG.info("CHAMOU 3");
                 } finally {
                     instream.close();
                 }
@@ -55,6 +51,22 @@ public class HttpControlDesktopImpl implements HttpControl {
         } catch (IOException ex) {
             Logger.getLogger(HttpControlDesktopImpl.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
+    
+    public String getExerciseAsString(double[] exercise){
+
+        StringBuilder stmExercise = new StringBuilder("[");
+
+        int i = 0;
+        
+        for (double valor : exercise) {
+           stmExercise.append(String.format("%.1f",valor)).append(",");
+            
+        }
+        
+        stmExercise.deleteCharAt(stmExercise.lastIndexOf(",")).append("]");
+
+        return stmExercise.toString();
     }
 
 }

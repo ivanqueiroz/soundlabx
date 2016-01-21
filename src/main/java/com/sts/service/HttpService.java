@@ -42,9 +42,9 @@ public class HttpService {
         return INSTANCE;
     }
      
-     public void sendExercise(double[] exercise) {
+     public void sendExercise(double[] exercise, long duration) {
         if (httpControl != null) {
-            httpControl.sendExercise(exercise);
+            httpControl.sendExercise(exercise, duration);
         }
     }
     

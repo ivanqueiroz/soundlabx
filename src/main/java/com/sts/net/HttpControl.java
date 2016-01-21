@@ -6,6 +6,6 @@ package com.sts.net;
  */
 public interface HttpControl {
     
-    public void sendExercise(double[] exercise);
+    public void sendExercise(double[] exercise, long duration);
     
 }

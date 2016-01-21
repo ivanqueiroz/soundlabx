@@ -168,6 +168,7 @@ public class StsController implements Initializable, SoundControlObserver {
         public void handle(long now) {
             passedTime = now - startTime;
             final double sample = getSample();
+            System.out.println(sample);
             exercise.add(sample);
             XYChart.Data<Number, Double> data = new XYChart.Data<>(passedTime, sample);
             serie.getData().add(data);
@@ -188,14 +189,12 @@ public class StsController implements Initializable, SoundControlObserver {
 
     private EventHandler<ActionEvent> createBtnUploadAction() {
         return (ActionEvent e) -> {
-            System.out.println("CHAMOU");
             double[] exerciseDoubleArray = new double[exercise.size()];
             for (int i = 0; i < exerciseDoubleArray.length; i++) {
                 exerciseDoubleArray[i] = exercise.get(i);
             }
             Thread thread = new Thread(() -> {
-                System.out.println("CHAMOU2");
-                HttpService.getInstance().sendExercise(exerciseDoubleArray);
+                HttpService.getInstance().sendExercise(exerciseDoubleArray, passedTime);
             });
             
             thread.start();
