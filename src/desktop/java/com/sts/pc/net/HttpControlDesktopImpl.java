@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.http.HttpEntity;
@@ -59,8 +60,10 @@ public class HttpControlDesktopImpl implements HttpControl {
 
         int i = 0;
         
+        
         for (double valor : exercise) {
-           stmExercise.append(String.format("%.1f",valor)).append(",");
+            
+           stmExercise.append(String.format(Locale.US,"%.1f",valor)).append(",");
             
         }
         
