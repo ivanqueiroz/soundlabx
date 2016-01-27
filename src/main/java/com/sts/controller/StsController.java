@@ -132,9 +132,9 @@ public class StsController implements Initializable, SoundControlObserver {
         yAxis.setCache(true);
         yAxis.setCacheHint(CacheHint.SPEED);
         yAxis.setLabel("Label");
-        yAxis.setLowerBound(0);
-        yAxis.setTickUnit(5);
-        yAxis.setUpperBound(100);
+        yAxis.setLowerBound(-40);
+        yAxis.setTickUnit(10);
+        yAxis.setUpperBound(0);
     }
 
     private void configureXAxis() {

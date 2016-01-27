@@ -94,7 +94,7 @@ public class SoundControlDesktopImpl implements SoundControl {
                 micLine = (TargetDataLine) AudioSystem.getLine(info);
             }
         } catch (Exception e) {
-           LOG.log(Level.SEVERE, "ERROR WHEN GET TARGET DATA LINE", e);
+            LOG.log(Level.SEVERE, "ERROR WHEN GET TARGET DATA LINE", e);
         }
 
         return micLine;
@@ -167,6 +167,7 @@ public class SoundControlDesktopImpl implements SoundControl {
                 targetDataLine.start();
 
                 while (!stopped) {
+
                     numBytesRead = targetDataLine.read(data, 0, data.length);
                     out.write(data, 0, numBytesRead);
                     short[] shortBuffer = byteArrayToShortArray(data);
@@ -175,7 +176,7 @@ public class SoundControlDesktopImpl implements SoundControl {
             }
 
         } catch (LineUnavailableException | IOException e) {
-           LOG.log(Level.SEVERE, "ERROR WHEN CAPTURE AUDIO", e);
+            LOG.log(Level.SEVERE, "ERROR WHEN CAPTURE AUDIO", e);
         }
     }
 
@@ -197,14 +198,22 @@ public class SoundControlDesktopImpl implements SoundControl {
     private double volProcess(short[] data) {
         int v;
         double vol = 0;
+        double lvl = 0;
 
         for (int i = 0; i < data.length; i++) {
             v = data[i];
             vol += v * v;
         }
+        //vol terá um valor de 0 a 100
         vol = (Math.sqrt(vol / data.length) / 327.68);
+        //Convertendo em decibeis
+        if (vol > 0) {
+            lvl = Math.log10(vol / 100) * 10;
+        } else {
+            lvl = -96.0;
+        }
 
-        return vol;
+        return lvl;
 
     }
 
