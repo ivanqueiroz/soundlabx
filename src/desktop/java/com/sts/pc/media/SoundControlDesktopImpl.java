@@ -122,7 +122,6 @@ public class SoundControlDesktopImpl implements SoundControl {
 
     @Override
     public void setSelectedMic(MicrophoneModel selectedMic) {
-        System.out.println("Chamou setSelectedMic() ");
         if (selectedMic != null) {
             final Mixer.Info info = getMixerInfo().get(selectedMic.getName());
             System.out.println("Info: " + info.getName());

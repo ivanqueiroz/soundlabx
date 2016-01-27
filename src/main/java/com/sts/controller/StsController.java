@@ -3,6 +3,7 @@ package com.sts.controller;
 import com.sts.media.SoundControlObserver;
 import com.sts.model.MicrophoneModel;
 import com.sts.model.enums.AudioFormatEnum;
+import com.sts.net.HttpServerObserver;
 import com.sts.service.HttpService;
 import com.sts.service.SoundControlService;
 import java.net.URL;
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.TimeUnit;
 import javafx.animation.AnimationTimer;
+import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -28,9 +30,10 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.layout.GridPane;
+import javafx.scene.paint.Color;
 import javafx.util.StringConverter;
 
-public class StsController implements Initializable, SoundControlObserver {
+public class StsController implements Initializable, SoundControlObserver, HttpServerObserver {
 
     @FXML
     private ComboBox cmbMic;
@@ -52,6 +55,9 @@ public class StsController implements Initializable, SoundControlObserver {
 
     @FXML
     private Label lblVolMic;
+    
+    @FXML
+    private Label lblStatus;
 
     private final AnimationTimer animation;
     private List<Double> exercise;
@@ -77,6 +83,7 @@ public class StsController implements Initializable, SoundControlObserver {
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         SoundControlService.getInstance().addObserver(this);
+        HttpService.getInstance().addObserver(this);
         slVolume.valueProperty().addListener((ObservableValue<? extends Number> ov, Number old_val, Number new_val) -> {
             SoundControlService.getInstance().setMicVolume(new_val.floatValue());
         });
@@ -162,6 +169,8 @@ public class StsController implements Initializable, SoundControlObserver {
         });
     }
 
+    
+
     private class TimelineChartAnimation extends AnimationTimer {
 
         double sampleAux = 0;
@@ -193,6 +202,9 @@ public class StsController implements Initializable, SoundControlObserver {
 
     private EventHandler<ActionEvent> createBtnUploadAction() {
         return (ActionEvent e) -> {
+            lblStatus.setDisable(false);
+            lblStatus.setText("Enviando");
+            lblStatus.setTextFill(Color.BLUE);
             double[] exerciseDoubleArray = new double[exercise.size()];
             for (int i = 0; i < exerciseDoubleArray.length; i++) {
                 exerciseDoubleArray[i] = exercise.get(i);
@@ -276,5 +288,13 @@ public class StsController implements Initializable, SoundControlObserver {
 
     private double getSample() {
         return this.sample;
+    }
+    
+    @Override
+    public void httpResult(String result) {
+        Platform.runLater(() -> {
+            lblStatus.setText(result);
+        });
+        
     }
 }

@@ -1,6 +1,7 @@
 package com.sts.service;
 
 import com.sts.net.HttpControl;
+import com.sts.net.HttpServerObserver;
 import static java.lang.String.format;
 import java.util.Iterator;
 import java.util.ServiceLoader;
@@ -45,6 +46,12 @@ public class HttpService {
      public void sendExercise(double[] exercise, long duration) {
         if (httpControl != null) {
             httpControl.sendExercise(exercise, duration);
+        }
+    }
+     
+     public void addObserver(HttpServerObserver observer){
+        if (httpControl != null) {
+            httpControl.addObserver(observer);
         }
     }
     

@@ -6,6 +6,6 @@ package com.sts.net;
  */
 public interface HttpServerObserver {
     
-    public void setResult(String result);
+    public void httpResult(String result);
     
 }

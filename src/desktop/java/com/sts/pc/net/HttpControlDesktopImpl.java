@@ -48,19 +48,19 @@ public class HttpControlDesktopImpl implements HttpControl {
                 if (entity != null) {
 
                     if (response.getStatusLine().getStatusCode() != 200) {
-                        serverResult = "Status Error: " + response.getStatusLine().getStatusCode();
+                        setServerResult("Status Error: " + response.getStatusLine().getStatusCode());
                     } else {
-                        serverResult = EntityUtils.toString(entity);
+                        setServerResult(EntityUtils.toString(entity));
                     }
                 }
             }
 
         } catch (UnsupportedEncodingException ex) {
             LOG.log(Level.SEVERE, null, ex);
-            serverResult = "Execution Error: " + ex.getMessage();
+            setServerResult("Execution Error: " + ex.getMessage());
         } catch (IOException ex) {
             Logger.getLogger(HttpControlDesktopImpl.class.getName()).log(Level.SEVERE, null, ex);
-            serverResult = "Execution Error: " + ex.getMessage();
+            setServerResult("Execution Error: " + ex.getMessage());
         }
     }
 
@@ -86,10 +86,15 @@ public class HttpControlDesktopImpl implements HttpControl {
     public void removeObserver(HttpServerObserver observer) {
         observers.remove(observer);
     }
+    
+    private void setServerResult(String serverResult){
+        this.serverResult = serverResult;
+        notifyObservers();
+    }
 
     private void notifyObservers() {
         observers.stream().forEach((observer) -> {
-            observer.setResult(serverResult);
+            observer.httpResult(serverResult);
         });
     }
 
