@@ -1,6 +1,7 @@
 package com.sts.pc.net;
 
 import com.sts.net.HttpControl;
+import com.sts.net.HttpServerObserver;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
@@ -24,6 +25,9 @@ public class HttpControlDesktopImpl implements HttpControl {
     private final String URL_SERVER = "http://sts-ivanqueiroz.rhcloud.com/exercise/save";
     //private final String URL_SERVER = "http://localhost:8080/stsweb/exercise/save";
     private static final Logger LOG = Logger.getLogger(HttpControlDesktopImpl.class.getName());
+    private final List<HttpServerObserver> observers = new ArrayList<>();
+
+    private String serverResult;
 
     public HttpControlDesktopImpl() {
         httpClient = HttpClients.createDefault();
@@ -39,49 +43,54 @@ public class HttpControlDesktopImpl implements HttpControl {
 
             httppost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
 
-            CloseableHttpResponse response = httpClient.execute(httppost);
-            try {
+            try (CloseableHttpResponse response = httpClient.execute(httppost)) {
                 HttpEntity entity = response.getEntity();
                 if (entity != null) {
 
                     if (response.getStatusLine().getStatusCode() != 200) {
-                        throw new RuntimeException("Failed : HTTP error code : " + response.getStatusLine().getStatusCode());
-                    }
-                   
-                    long len = entity.getContentLength();
-                    System.out.println(EntityUtils.toString(entity));
-                    if (len != -1 && len < 2048) {
-                        System.out.println(EntityUtils.toString(entity));
+                        serverResult = "Status Error: " + response.getStatusLine().getStatusCode();
                     } else {
-                        System.out.println("NO RETURNS");
+                        serverResult = EntityUtils.toString(entity);
                     }
                 }
-            } finally {
-                response.close();
             }
 
         } catch (UnsupportedEncodingException ex) {
             LOG.log(Level.SEVERE, null, ex);
+            serverResult = "Execution Error: " + ex.getMessage();
         } catch (IOException ex) {
             Logger.getLogger(HttpControlDesktopImpl.class.getName()).log(Level.SEVERE, null, ex);
+            serverResult = "Execution Error: " + ex.getMessage();
         }
     }
 
     private String getExerciseAsString(double[] exercise) {
 
         StringBuilder stmExercise = new StringBuilder("[");
-
         int i = 0;
 
         for (double valor : exercise) {
 
             stmExercise.append(String.format(Locale.US, "%.1f", valor)).append(",");
-
         }
-
         stmExercise.deleteCharAt(stmExercise.lastIndexOf(",")).append("]");
-
         return stmExercise.toString();
+    }
+
+    @Override
+    public void addObserver(HttpServerObserver observer) {
+        observers.add(observer);
+    }
+
+    @Override
+    public void removeObserver(HttpServerObserver observer) {
+        observers.remove(observer);
+    }
+
+    private void notifyObservers() {
+        observers.stream().forEach((observer) -> {
+            observer.setResult(serverResult);
+        });
     }
 
 }
