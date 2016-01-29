@@ -80,7 +80,7 @@
    <bottom>
       <HBox prefHeight="24.0" prefWidth="564.0" BorderPane.alignment="CENTER">
          <children>
-            <Label fx:id="lblStatus" disable="true" text="Label" textFill="#0d0d0d">
+            <Label fx:id="lblStatus" disable="true" text="Label" textFill="#0d0d0d" visible="false">
                <font>
                   <Font size="17.0" />
                </font>

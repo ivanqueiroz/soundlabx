@@ -55,7 +55,7 @@ public class StsController implements Initializable, SoundControlObserver, HttpS
 
     @FXML
     private Label lblVolMic;
-    
+
     @FXML
     private Label lblStatus;
 
@@ -169,8 +169,6 @@ public class StsController implements Initializable, SoundControlObserver, HttpS
         });
     }
 
-    
-
     private class TimelineChartAnimation extends AnimationTimer {
 
         double sampleAux = 0;
@@ -202,8 +200,9 @@ public class StsController implements Initializable, SoundControlObserver, HttpS
 
     private EventHandler<ActionEvent> createBtnUploadAction() {
         return (ActionEvent e) -> {
+            lblStatus.setVisible(true);
             lblStatus.setDisable(false);
-            lblStatus.setText("Enviando");
+            lblStatus.setText("Sending...");
             lblStatus.setTextFill(Color.BLUE);
             double[] exerciseDoubleArray = new double[exercise.size()];
             for (int i = 0; i < exerciseDoubleArray.length; i++) {
@@ -289,12 +288,20 @@ public class StsController implements Initializable, SoundControlObserver, HttpS
     private double getSample() {
         return this.sample;
     }
-    
+
     @Override
     public void httpResult(String result) {
         Platform.runLater(() -> {
-            lblStatus.setText(result);
+            if (result.contains("OK")) {
+                lblStatus.setVisible(true);
+                lblStatus.setTextFill(Color.GREEN);
+                lblStatus.setText("Upload Completed");
+            }else{
+                lblStatus.setVisible(true);
+                lblStatus.setTextFill(Color.RED);
+                lblStatus.setText("Upload Error");
+            }
         });
-        
+
     }
 }
