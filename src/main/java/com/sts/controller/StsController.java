@@ -31,6 +31,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
 import javafx.util.StringConverter;
 
 public class StsController implements Initializable, SoundControlObserver, HttpServerObserver {
@@ -200,10 +201,7 @@ public class StsController implements Initializable, SoundControlObserver, HttpS
 
     private EventHandler<ActionEvent> createBtnUploadAction() {
         return (ActionEvent e) -> {
-            lblStatus.setVisible(true);
-            lblStatus.setDisable(false);
-            lblStatus.setText("Sending...");
-            lblStatus.setTextFill(Color.BLUE);
+            statusSending();
             double[] exerciseDoubleArray = new double[exercise.size()];
             for (int i = 0; i < exerciseDoubleArray.length; i++) {
                 exerciseDoubleArray[i] = exercise.get(i);
@@ -214,6 +212,14 @@ public class StsController implements Initializable, SoundControlObserver, HttpS
 
             thread.start();
         };
+    }
+
+    private void statusSending() {
+        boolean visible = true;
+        boolean disabled = false;
+        String lblTextSending = "Sending...";
+        Paint blue = Color.BLUE;
+        configureStatusLabel(visible, disabled, lblTextSending, blue);
     }
 
     private EventHandler<ActionEvent> createBtnRecordAction() {
@@ -293,15 +299,34 @@ public class StsController implements Initializable, SoundControlObserver, HttpS
     public void httpResult(String result) {
         Platform.runLater(() -> {
             if (result.contains("OK")) {
-                lblStatus.setVisible(true);
-                lblStatus.setTextFill(Color.GREEN);
-                lblStatus.setText("Upload Completed");
-            }else{
-                lblStatus.setVisible(true);
-                lblStatus.setTextFill(Color.RED);
-                lblStatus.setText("Upload Error");
+                btnUpload.setDisable(true);
+                statusUploadCompleted();
+            } else {
+                statusUploadError();
             }
         });
+    }
 
+    private void statusUploadError() {
+        boolean visible = true;
+        boolean disabled = false;
+        String lblTextSending = "Upload Error";
+        Paint green = Color.RED;
+        configureStatusLabel(visible, disabled, lblTextSending, green);
+    }
+
+    private void statusUploadCompleted() {
+        boolean visible = true;
+        boolean disabled = false;
+        String lblTextSending = "Upload Completed";
+        Paint green = Color.GREEN;
+        configureStatusLabel(visible, disabled, lblTextSending, green);
+    }
+    
+     private void configureStatusLabel(boolean visible, boolean disable, String lblTextSending, Paint blue) {
+        lblStatus.setVisible(visible);
+        lblStatus.setDisable(disable);
+        lblStatus.setText(lblTextSending);
+        lblStatus.setTextFill(blue);
     }
 }
