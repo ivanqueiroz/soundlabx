@@ -140,7 +140,7 @@ public class StsController implements Initializable, SoundControlObserver, HttpS
         yAxis.setCache(true);
         yAxis.setCacheHint(CacheHint.SPEED);
         yAxis.setLabel("Label");
-        yAxis.setLowerBound(-40);
+        yAxis.setLowerBound(-80);
         yAxis.setTickUnit(10);
         yAxis.setUpperBound(0);
     }

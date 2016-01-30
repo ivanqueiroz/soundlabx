@@ -207,7 +207,7 @@ public class SoundControlDesktopImpl implements SoundControl {
         vol = (Math.sqrt(vol / data.length) / 327.68);
         //Convertendo em decibeis
         if (vol > 0) {
-            lvl = Math.log10(vol / 100) * 10;
+            lvl = Math.log10(vol / 100) * 20;
         } else {
             lvl = -96.0;
         }
